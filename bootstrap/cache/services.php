@@ -35,6 +35,7 @@
     31 => 'Termwind\\Laravel\\TermwindServiceProvider',
     32 => 'Spatie\\Permission\\PermissionServiceProvider',
     33 => 'Yajra\\DataTables\\DataTablesServiceProvider',
+    34 => 'App\\Providers\\AppServiceProvider',
   ),
   'eager' => 
   array (
@@ -58,6 +59,7 @@
     17 => 'Termwind\\Laravel\\TermwindServiceProvider',
     18 => 'Spatie\\Permission\\PermissionServiceProvider',
     19 => 'Yajra\\DataTables\\DataTablesServiceProvider',
+    20 => 'App\\Providers\\AppServiceProvider',
   ),
   'deferred' => 
   array (
