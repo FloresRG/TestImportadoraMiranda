@@ -12,7 +12,7 @@
             <h2 class="welcome-text">¡Bienvenidos al sistema de Importadora Miranda!</h2>
             <h1 class="main-title subtle-animated">
                 <i class="fas fa-chart-line mr-2"></i>
-                Panel de Estadísticas de Ventas
+                Panel de Estadísticas de Ventas nuevo
             </h1>
         </div>
     </div>
