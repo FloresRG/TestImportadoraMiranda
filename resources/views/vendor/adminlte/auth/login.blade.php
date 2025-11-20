@@ -644,7 +644,7 @@
 {{-- Header del formulario --}}
 @section('auth_header')
     <div class="auth-header">
-        <h1>IMPORTADORA MIRANDA</h1>
+        <h1>TEST MIRANDA</h1>
     </div>
 @stop
 
