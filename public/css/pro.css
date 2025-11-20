@@ -1,0 +1,611 @@
+/* Clock styles */
+#clock {
+    font-size: 40px;
+    font-weight: bold;
+}
+
+/* Modal styles */
+.modal-body {
+    overflow-y: auto;
+    max-height: 80vh;
+}
+
+.modal-dialog {
+    max-width: 90%;
+    margin: 1.75rem auto;
+}
+
+/* Out of stock card styles */
+.out-of-stock-card {
+    background-color: #ffcccc;
+}
+
+.out-of-stock-card .card-footer,
+.out-of-stock-card .widget-user-header,
+.out-of-stock-card .widget-user-image,
+.out-of-stock-card .description-block {
+    opacity: 0.7;
+}
+
+.out-of-stock-card .widget-user-header {
+    background-color: #ff0000;
+    color: #ffffff;
+}
+
+.out-of-stock-card .btn {
+    background-color: #ff0000;
+    color: #ffffff;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Pagination styles */
+#pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 5px 0;
+    margin: 0;
+    list-style: none;
+}
+
+.page-item {
+    margin: 0 2px;
+}
+
+.page-link {
+    display: block;
+    padding: 4px 8px;
+    color: #007bff;
+    text-decoration: none;
+    border-radius: 3px;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    font-size: 12px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.page-link:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+
+/* Mobile pagination */
+@media (max-width: 576px) {
+    #pagination {
+        font-size: 10px;
+        padding: 3px 0;
+    }
+
+    .page-item {
+        margin: 0 1px;
+    }
+
+    .page-link {
+        padding: 3px 6px;
+    }
+}
+
+/* Tablet pagination */
+@media (max-width: 768px) and (min-width: 577px) {
+    #pagination {
+        font-size: 12px;
+    }
+
+    .page-link {
+        padding: 4px 8px;
+    }
+}
+
+/* Desktop pagination */
+@media (min-width: 769px) {
+    #pagination {
+        font-size: 14px;
+    }
+
+    .page-link {
+        padding: 6px 12px;
+    }
+}
+
+/* Enhanced modal styles for carrito */
+#carritoModal .modal-content {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    background: linear-gradient(135deg, #f0f0f0 0%, #e6d6ff 25%, #d1c5ff 50%, #b8d0ff 75%, #b8d0ff 100%);
+    color: #333;
+}
+
+#carritoModal .modal-header {
+    background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #a582ff;
+}
+
+#carritoModal .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+#carritoModal .modal-header label[for="compra_producto"] {
+    margin-bottom: 0;
+    font-weight: 500;
+    align-self: center;
+}
+
+#carritoModal .modal-header .row {
+    flex: 1;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+#carritoModal .modal-header .form-check-input[type="radio"] {
+    margin-top: 0.25rem;
+}
+
+#carritoModal .modal-header .form-check-label {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+
+#carritoModal .modal-header th,
+#carritoModal .modal-header td {
+    vertical-align: middle;
+    border-color: #a582ff;
+    color: #333;
+}
+
+#lista-carrito th,
+#lista-carrito td {
+    vertical-align: middle;
+    border-color: #a582ff;
+    color: #333;
+}
+
+#lista-carrito {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.3rem;
+}
+
+#lista-carrito input.form-control {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.5rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid #a582ff;
+    color: #333;
+    border-radius: 0.25rem;
+}
+
+#lista-carrito input.form-control:focus {
+    background-color: white;
+    border-color: #3b78d8;
+    box-shadow: 0 0 0 0.2rem rgba(59, 120, 216, 0.25);
+}
+
+#carritoModal .modal-body .form-group label {
+    font-weight: 500;
+    color: #492a7a;
+}
+
+#carritoModal .modal-body .form-control {
+    border-radius: 0.25rem;
+    border: 1px solid #a582ff;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #333;
+}
+
+#carritoModal .modal-body .form-control:focus {
+    background-color: white;
+    border-color: #3b78d8;
+    box-shadow: 0 0 0 0.2rem rgba(59, 120, 216, 0.25);
+}
+
+#carritoModal .modal-footer {
+    border-top: 1px solid #a582ff;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #e6d6ff 0%, #d1c5ff 100%);
+}
+
+#carritoModal .modal-footer .btn {
+    border-radius: 0.25rem;
+    font-weight: 500;
+    border: none;
+}
+
+#carritoModal .modal-footer .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+#carritoModal .modal-footer .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+#carritoModal .modal-footer .btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+#carritoModal .modal-footer .btn-danger:hover {
+    background-color: #c82333;
+}
+
+#carritoModal .modal-footer .btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+#carritoModal .modal-footer .btn-success:hover {
+    background-color: #218838;
+}
+
+#carritoModal .modal-header .btn-info {
+    background-color: #3b78d8;
+    border-color: #3b78d8;
+}
+
+#carritoModal .modal-header .btn-info:hover {
+    background-color: #2a5cb0;
+    border-color: #2a5cb0;
+}
+
+#carritoModal .modal-header .close {
+    color: white;
+    opacity: 0.7;
+    font-size: 1.5rem;
+}
+
+#carritoModal .modal-header .close:hover {
+    opacity: 1;
+}
+
+/* Toggle button styles for warranty */
+.toggle-button-cover {
+    display: inline-block;
+    position: relative;
+    width: 60px;
+    height: 30px;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+.button-cover,
+.knobs,
+.layer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.button {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 26px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.checkbox {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 3;
+}
+
+.knobs {
+    z-index: 2;
+}
+
+.layer {
+    width: 100%;
+    background-color: #e6d6ff;
+    transition: 0.3s ease all;
+    z-index: 1;
+}
+
+.button.r,
+.button.r .layer {
+    border-radius: 13px;
+}
+
+#button-3 .knobs:before {
+    content: "NO";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    color: #fff;
+    font-size: 8px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 22px;
+    padding: 0;
+    background-color: #dc3545;
+    border-radius: 50%;
+    transition: 0.3s ease all, left 0.3s cubic-bezier(0.18, 0.89, 0.35, 1.15);
+    box-sizing: border-box;
+}
+
+#button-3 .checkbox:active+.knobs:before {
+    width: 36px;
+    border-radius: 11px;
+}
+
+#button-3 .checkbox:checked:active+.knobs:before {
+    margin-left: -14px;
+}
+
+#button-3 .checkbox:checked+.knobs:before {
+    content: "SI";
+    left: 36px;
+    background-color: #28a745;
+}
+
+#button-3 .checkbox:checked~.layer {
+    background-color: #d1c5ff;
+}
+
+/* Toggle button styles for seller */
+.toggle-button-cover-vendedor {
+    display: inline-block;
+    position: relative;
+    width: 60px;
+    height: 30px;
+    box-sizing: border-box;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.button-vendedor-cover,
+.knobs-vendedor,
+.layer-vendedor {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.button-vendedor {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 26px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.checkbox-vendedor {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 3;
+}
+
+.knobs-vendedor {
+    z-index: 2;
+}
+
+.layer-vendedor {
+    width: 100%;
+    background-color: #e6d6ff;
+    transition: 0.3s ease all;
+    z-index: 1;
+}
+
+.button-vendedor.r,
+.button-vendedor.r .layer-vendedor {
+    border-radius: 13px;
+}
+
+#button-vendedor .knobs-vendedor:before {
+    content: "NO";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    color: #fff;
+    font-size: 8px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 22px;
+    padding: 0;
+    background-color: #dc3545;
+    border-radius: 50%;
+    transition: 0.3s ease all, left 0.3s cubic-bezier(0.18, 0.89, 0.35, 1.15);
+    box-sizing: border-box;
+}
+
+#button-vendedor .checkbox-vendedor:active+.knobs-vendedor:before {
+    width: 36px;
+    border-radius: 11px;
+}
+
+#button-vendedor .checkbox-vendedor:checked:active+.knobs-vendedor:before {
+    margin-left: -14px;
+}
+
+#button-vendedor .checkbox-vendedor:checked+.knobs-vendedor:before {
+    content: "SI";
+    left: 36px;
+    background-color: #28a745;
+}
+
+#button-vendedor .checkbox-vendedor:checked~.layer-vendedor {
+    background-color: #d1c5ff;
+}
+
+/* Custom radio button styles */
+.checkbox-wrapper {
+    --checkbox-size: 25px;
+    --checkbox-color: #a582ff;
+    --checkbox-shadow: rgba(165, 130, 255, 0.3);
+    --checkbox-border: rgba(165, 130, 255, 0.7);
+    display: flex;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+    padding: 5px 10px;
+    margin-bottom: 0;
+    transition: all 0.3s ease;
+}
+
+.checkbox-wrapper input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkbox-wrapper .checkmark {
+    position: relative;
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    border: 2px solid var(--checkbox-border);
+    border-radius: 8px;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(165, 130, 255, 0.1);
+    box-shadow: 0 0 15px var(--checkbox-shadow);
+    overflow: hidden;
+}
+
+.checkbox-wrapper .checkmark::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, var(--checkbox-color), #c5b0ff);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform: scale(0) rotate(-45deg);
+}
+
+.checkbox-wrapper input[type="radio"]:checked~.checkmark::before {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+}
+
+.checkbox-wrapper .checkmark svg {
+    width: 0;
+    height: 0;
+    color: #1a1a1a;
+    z-index: 1;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+.checkbox-wrapper input[type="radio"]:checked~.checkmark svg {
+    width: 18px;
+    height: 18px;
+    transform: rotate(360deg);
+}
+
+.checkbox-wrapper:hover .checkmark {
+    border-color: var(--checkbox-color);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--checkbox-shadow), 0 0 40px var(--checkbox-shadow), inset 0 0 10px var(--checkbox-shadow);
+}
+
+.checkbox-wrapper input[type="radio"]:checked~.checkmark {
+    animation: pulse 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 20px var(--checkbox-shadow);
+    }
+    50% {
+        transform: scale(0.9);
+        box-shadow: 0 0 30px var(--checkbox-shadow), 0 0 50px var(--checkbox-shadow);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px var(--checkbox-shadow);
+    }
+}
+
+.checkbox-wrapper .label {
+    margin-left: 10px;
+    font-family: "Segoe UI", sans-serif;
+    color: var(--checkbox-color);
+    font-size: 16px;
+    text-shadow: 0 0 10px var(--checkbox-shadow);
+    opacity: 0.9;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.checkbox-wrapper:hover .label {
+    opacity: 1;
+    transform: translateX(5px);
+}
+
+.checkbox-wrapper::after,
+.checkbox-wrapper::before {
+    content: "";
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--checkbox-color);
+    opacity: 0;
+    transition: all 0.5s;
+}
+
+.checkbox-wrapper::before {
+    left: -10px;
+    top: 50%;
+}
+
+.checkbox-wrapper::after {
+    right: -10px;
+    top: 50%;
+}
+
+.checkbox-wrapper:hover::before {
+    opacity: 1;
+    transform: translateX(-10px);
+    box-shadow: 0 0 10px var(--checkbox-color);
+}
+
+.checkbox-wrapper:hover::after {
+    opacity: 1;
+    transform: translateX(10px);
+    box-shadow: 0 0 10px var(--checkbox-color);
+}
+
+#carritoModal .form-group div.row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#carritoModal .form-group div.row>div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
