@@ -22,19 +22,49 @@ document.addEventListener("alpine:init", () => {
         },
 
         agregar(producto) {
-            if (producto.stock <= 0) return;
+            if (producto.stock <= 0) {
+                Swal.fire({
+                    title: "Sin Stock",
+                    text: `No hay stock disponible para ${producto.nombre}`,
+                    icon: "warning",
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                });
+                return;
+            }
 
-            const item = this.items.find((i) => i.id === producto.id);
-            if (item) {
-                item.cantidad++;
+            // Verificar si ya tenemos este producto en el carrito
+            const itemExistente = this.items.find((i) => i.id === producto.id);
+            if (itemExistente) {
+                // Si ya existe, verificar que no exceda el stock disponible
+                if (itemExistente.cantidad >= producto.stock) {
+                    Swal.fire({
+                        title: "Stock Insuficiente",
+                        text: `No puedes agregar más unidades de ${producto.nombre}. Stock disponible: ${producto.stock}`,
+                        icon: "error",
+                        toast: true,
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                    return;
+                }
+                itemExistente.cantidad++;
             } else {
+                // Si no existe, agregar uno
                 this.items.push({
                     id: producto.id,
                     nombre: producto.nombre,
                     precio: producto.precio,
                     cantidad: 1,
+                    stockSucursal: producto.stock, // Guardar el stock disponible
                 });
             }
+
             this.guardar();
 
             // 🔊 Sonido
@@ -127,23 +157,23 @@ document.addEventListener("alpine:init", () => {
 
                 html += `
                     <div class="col-md-4 mb-4">
-                        <div class="position-relative rounded-4 overflow-hidden shadow-sm border" style="width: 100%; height: 470px; background: white;">
+                        <div class="position-relative rounded-4 overflow-hidden shadow-sm border" style="width: 100%; height: 500px; background: white;">
                             ${fotos.length > 0 ? `<div class="w-100 h-100 position-absolute top-0 start-0 opacity-15" style="background-image: url('/storage/${fotos[0].foto}'); background-size: cover; background-position: center; z-index: 0;"></div>` : ''}
                             <div class="position-absolute top-0 start-0 w-100 py-2 text-center" style="background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%); z-index: 2;">
                                 <h5 class="text-white fw-bold mb-0" style="font-size: 1.6rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${nombre}</h5>
                             </div>
-                            <div class="position-relative z-1 d-flex flex-column justify-content-between h-100 pt-16 px-4 pb-4">
-                                <div class="d-flex justify-content-end">
+                            <div class="position-relative z-1 d-flex flex-column justify-content-between h-100 pt-20 px-4 pb-4">
+                                <div class="d-flex justify-content-end mt-5">
                                     <div class="d-flex flex-column align-items-end gap-3">
                                         <span class="badge rounded-pill px-4 py-2" style="background-color: #dbeafe; color: #1d4ed8; font-weight: 700; font-size: 1.1rem;">${stockSucursal} en stock</span>
                                         <span class="badge rounded-pill px-4 py-2" style="background-color: #e0f2fe; color: #0ea5e9; font-weight: 700; font-size: 1.1rem;">${categoria}</span>
                                         <span class="badge rounded-pill px-4 py-2" style="background-color: #cffafe; color: #0891b2; font-weight: 700; font-size: 1.1rem;">${marca}</span>
-                                        <span class="badge rounded-pill px-4 py-2" style="background-color: #bae6fd; color: #0284c7; font-weight: 700; font-size: 1.1rem;">${stockActual}</span>
                                     </div>
                                 </div>
+
                                 <div class="mt-auto">
                                     <p class="badge rounded-pill px-4 py-2 mb-3" style="background-color: #bae6fd; color: #0284c7; font-weight: 700; font-size: 1.25rem; width: fit-content;">Bs. ${parseFloat(precio).toFixed(2).replace('.', ',')}</p>
-                                    <button type="button" x-data @click="$dispatch('agregar-al-carrito', { id: ${producto.producto?.id || producto.id}, nombre: '${nombre.replace(/'/g, "\\'")}', precio: ${precio}, stock: ${stockSucursal} })" class="btn fw-bold text-white rounded-pill w-100 py-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%); border: none; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 16px rgba(59, 120, 216, 0.4)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';" ${stockSucursal <= 0 ? 'disabled' : ''}>
+                                    <button type="button" x-data @click="$dispatch('agregar-al-carrito', { id: ${producto.producto?.id || producto.id}, nombre: '${nombre.replace(/'/g, "\\'")}', precio: ${precio}, stock: ${stockSucursal} })" class="btn fw-bold text-white rounded-pill w-100 py-3 position-relative overflow-hidden ${stockSucursal <= 0 ? 'btn-danger' : ''}" style="${stockSucursal > 0 ? 'background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%); border: none; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px; transition: transform 0.3s ease, box-shadow 0.3s ease;' : 'background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px; cursor: not-allowed; opacity: 0.7;'}" onmouseover="${stockSucursal > 0 ? "this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 16px rgba(59, 120, 216, 0.4)';" : ''}" onmouseout="${stockSucursal > 0 ? "this.style.transform='scale(1)'; this.style.boxShadow='none';" : ''}" ${stockSucursal <= 0 ? 'disabled' : ''}>
                                         ${stockSucursal > 0 ? 'VENDER' : 'SIN STOCK'}
                                     </button>
                                 </div>
@@ -430,7 +460,7 @@ function mostrarCarrito() {
             <td>${item.id}</td>
             <td>${item.nombre}</td>
             <td><input type="number" class="form-control precio-input" value="${item.precio.toFixed(2)}" data-index="${index}" step="0.01"></td>
-            <td><input type="number" class="form-control cantidad-input" value="${item.cantidad}" data-index="${index}" step="1"></td>
+            <td><input type="number" class="form-control cantidad-input" value="${item.cantidad}" data-index="${index}" step="1" max="${item.stockSucursal || 999}" min="1"></td>
             <td><input type="number" class="form-control total-input" value="${total.toFixed(2)}" data-index="${index}" step="0.01" ></td>
             <td><button class="btn btn-danger btn-sm eliminar" data-id="${item.id}">Eliminar</button></td>
         </tr>
@@ -457,6 +487,20 @@ function mostrarCarrito() {
             } else if (this.classList.contains('cantidad-input')) {
                 nuevaCantidad = parseFloat(this.value); // Cambiar a parseFloat para permitir decimales en la cantidad
                 if (nuevaCantidad > 0) {
+                    // Validar que no exceda el stock disponible
+                    if (carrito[index].stockSucursal && nuevaCantidad > carrito[index].stockSucursal) {
+                        Swal.fire({
+                            title: 'Stock Insuficiente',
+                            html: `
+                            <p style="font-size: 18px; font-weight: bold;">La cantidad (${nuevaCantidad}) excede el stock disponible.</p>
+                            <p style="color: red; font-size: 26px;">Stock disponible: ${carrito[index].stockSucursal} unidades</p>
+                            `,
+                            icon: 'error',
+                            confirmButtonText: 'Aceptar'
+                        });
+                        this.value = carrito[index].cantidad;
+                        return;
+                    }
                     carrito[index].cantidad = nuevaCantidad;
                     nuevoPrecio = carrito[index].precio;
                     nuevoTotal = nuevoPrecio * nuevaCantidad;
@@ -542,6 +586,7 @@ listaCarrito.addEventListener('click', function(e) {
 });
 
 document.getElementById('venta-form').addEventListener('submit', function(event) {
+    console.log('Form submit triggered'); // Debug
     event.preventDefault(); // Evitar el envío predeterminado del formulario
     // Obtener el id de sucursal (por ejemplo, desde un valor en el backend o en un campo oculto)
     const sucursalId = <?php echo e($id); ?>; // Asumimos que $id es el ID de la sucursal disponible desde el backend
@@ -598,6 +643,23 @@ document.getElementById('venta-form').addEventListener('submit', function(event)
             // Get the selected payment method
             const tipoPagoInput = document.querySelector('input[name="tipo_pago"]:checked');
             const tipoPago = tipoPagoInput ? tipoPagoInput.value : null;
+            console.log('Tipo de pago seleccionado:', tipoPago); // Debug
+
+            // Validar que se haya seleccionado un método de pago
+            if (!tipoPago) {
+                console.log('Mostrando toast de validación'); // Debug
+                Swal.fire({
+                    title: 'Método de Pago Requerido',
+                    text: 'Por favor selecciona un método de pago antes de confirmar la venta.',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                });
+                return;
+            }
             // Crear campos ocultos para el formulario
             const inputProductos = document.createElement('input');
             inputProductos.type = 'hidden';
