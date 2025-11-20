@@ -1,6 +1,6 @@
 <div class="row mb-3">
     <div class="col-md-6">
-        <a href="{{ route('ventas.index') }}" class="btn btn-secondary">← Volver</a>
+        <a href="{{ route('control.index') }}" class="btn btn-secondary">← Volver</a>
     </div>
     <div class="col-md-6 text-right">
         <div class="position-relative">

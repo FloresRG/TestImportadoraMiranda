@@ -1,5 +1,197 @@
-// Payment method display logic
 <script>
+// Alpine.js store for cart management (like productos.blade.php)
+document.addEventListener("alpine:init", () => {
+    Alpine.store("carrito", {
+        items: (() => {
+            try {
+                const sucursalId = {{ $id }};
+                const data = localStorage.getItem(`carrito-${sucursalId}`);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                return [];
+            }
+        })(),
+
+        guardar() {
+            const sucursalId = {{ $id }};
+            localStorage.setItem(`carrito-${sucursalId}`, JSON.stringify(this.items));
+        },
+
+        get totalItems() {
+            return this.items.reduce((sum, item) => sum + item.cantidad, 0);
+        },
+
+        agregar(producto) {
+            if (producto.stock <= 0) return;
+
+            const item = this.items.find((i) => i.id === producto.id);
+            if (item) {
+                item.cantidad++;
+            } else {
+                this.items.push({
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    precio: producto.precio,
+                    cantidad: 1,
+                });
+            }
+            this.guardar();
+
+            // 🔊 Sonido
+            const audio = new Audio("/sounds/timbre.mp3");
+            audio.play().catch((e) => console.warn("Audio play failed:", e));
+
+            // 🍞 Notificación tipo toast
+            Swal.fire({
+                title: "Producto agregado",
+                text: `${producto.nombre} agregado al carrito`,
+                icon: "success",
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+            });
+        },
+
+        quitar(id) {
+            this.items = this.items.filter((i) => i.id !== id);
+            this.guardar();
+        },
+    });
+
+    Alpine.data("productosApp", (sucursalId) => ({
+        query: "",
+        sugerencias: [],
+        inputFocused: false,
+        debounceTimer: null,
+
+        init() {
+            this.loadProductos();
+            this.$watch("query", () => {
+                if (this.query.length < 2) this.sugerencias = [];
+                clearTimeout(this.debounceTimer);
+                this.debounceTimer = setTimeout(() => {
+                    this.loadProductos(1);
+                    if (this.query.length >= 2) this.buscarSugerencias();
+                }, 350);
+            });
+
+            this.$el.addEventListener("agregar-al-carrito", (e) => {
+                Alpine.store("carrito").agregar(e.detail);
+            });
+        },
+
+        async loadProductos(page = 1) {
+            const url = new URL(
+                `/control/sucursal/${sucursalId}`,
+                window.location.origin
+            );
+            if (this.query.length >= 2)
+                url.searchParams.set("search", this.query);
+            url.searchParams.set("page", page);
+
+            try {
+                const response = await axios.get(url.toString(), {
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+
+                // The controller returns JSON with 'productos' key
+                const productos = response.data.productos;
+                if (productos && productos.data) {
+                    // Render products using the partial template
+                    const html = await this.renderProductos(productos.data);
+                    document.getElementById("productos-list").innerHTML = html;
+
+                    // Render pagination
+                    const paginationHtml = this.renderPagination(productos);
+                    document.getElementById("pagination-links").innerHTML = paginationHtml;
+                }
+            } catch (err) {
+                console.error("Error al cargar productos:", err);
+                document.getElementById("productos-list").innerHTML = '<div class="col-12"><div class="text-center py-5"><div class="bg-light rounded-3 d-inline-flex p-4 mb-3"><i class="fas fa-exclamation-triangle fa-2x text-warning"></i></div><p class="text-muted mb-0" style="font-size: 1.25rem;">Error al cargar productos</p></div></div>';
+            }
+        },
+
+        async renderProductos(productos) {
+            // Render each product using the same structure as the partial
+            let html = '';
+            productos.forEach(producto => {
+                const stockSucursal = producto.cantidad || 0;
+                const precio = producto.producto?.precio || 0;
+                const nombre = producto.producto?.nombre || 'Producto sin nombre';
+                const categoria = producto.producto?.categoria?.categoria || '—';
+                const marca = producto.producto?.marca?.marca || '—';
+                const stockActual = producto.producto?.stock_actual || 0;
+                const fotos = producto.producto?.fotos || [];
+
+                html += `
+                    <div class="col-md-4 mb-4">
+                        <div class="position-relative rounded-4 overflow-hidden shadow-sm border" style="width: 100%; height: 470px; background: white;">
+                            ${fotos.length > 0 ? `<div class="w-100 h-100 position-absolute top-0 start-0 opacity-15" style="background-image: url('/storage/${fotos[0].foto}'); background-size: cover; background-position: center; z-index: 0;"></div>` : ''}
+                            <div class="position-absolute top-0 start-0 w-100 py-2 text-center" style="background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%); z-index: 2;">
+                                <h5 class="text-white fw-bold mb-0" style="font-size: 1.6rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${nombre}</h5>
+                            </div>
+                            <div class="position-relative z-1 d-flex flex-column justify-content-between h-100 pt-16 px-4 pb-4">
+                                <div class="d-flex justify-content-end">
+                                    <div class="d-flex flex-column align-items-end gap-3">
+                                        <span class="badge rounded-pill px-4 py-2" style="background-color: #dbeafe; color: #1d4ed8; font-weight: 700; font-size: 1.1rem;">${stockSucursal} en stock</span>
+                                        <span class="badge rounded-pill px-4 py-2" style="background-color: #e0f2fe; color: #0ea5e9; font-weight: 700; font-size: 1.1rem;">${categoria}</span>
+                                        <span class="badge rounded-pill px-4 py-2" style="background-color: #cffafe; color: #0891b2; font-weight: 700; font-size: 1.1rem;">${marca}</span>
+                                        <span class="badge rounded-pill px-4 py-2" style="background-color: #bae6fd; color: #0284c7; font-weight: 700; font-size: 1.1rem;">${stockActual}</span>
+                                    </div>
+                                </div>
+                                <div class="mt-auto">
+                                    <p class="badge rounded-pill px-4 py-2 mb-3" style="background-color: #bae6fd; color: #0284c7; font-weight: 700; font-size: 1.25rem; width: fit-content;">Bs. ${parseFloat(precio).toFixed(2).replace('.', ',')}</p>
+                                    <button type="button" class="btn fw-bold text-white rounded-pill w-100 py-3 position-relative overflow-hidden agregar-carrito" data-id="${producto.producto?.id || producto.id}" data-nombre="${nombre}" data-precio="${precio}" data-stock-sucursal="${stockSucursal}" style="background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%); border: none; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 16px rgba(59, 120, 216, 0.4)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';" ${stockSucursal <= 0 ? 'disabled' : ''} data-toggle="modal" data-target="#cantidadModal">
+                                        ${stockSucursal > 0 ? 'VENDER' : 'SIN STOCK'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (productos.length === 0) {
+                html = '<div class="col-12"><div class="text-center py-5"><div class="bg-light rounded-3 d-inline-flex p-4 mb-3"><i class="fas fa-inbox fa-2x text-muted"></i></div><p class="text-muted mb-0" style="font-size: 1.25rem;">No hay productos en esta sucursal.</p></div></div>';
+            }
+
+            return html;
+        },
+
+        renderPagination(productos) {
+            if (!productos.last_page || productos.last_page <= 1) return '';
+
+            let paginationHtml = '<ul class="pagination justify-content-center">';
+            for (let i = 1; i <= productos.last_page; i++) {
+                paginationHtml += `<li class="page-item ${i === productos.current_page ? 'active' : ''}"><a href="#" class="page-link" data-page="${i}">${i}</a></li>`;
+            }
+            paginationHtml += '</ul>';
+            return paginationHtml;
+        },
+
+        async buscarSugerencias() {
+            try {
+                const res = await axios.get(
+                    `/ventas/sugerencias/${sucursalId}`,
+                    { params: { q: this.query } }
+                );
+                this.sugerencias = res.data;
+            } catch (err) {
+                console.error("Error en sugerencias:", err);
+            }
+        },
+
+        selectSuggestion(item) {
+            this.query = item.nombre;
+            this.sugerencias = [];
+            this.inputFocused = false;
+        },
+    }));
+});
+
+// Payment method display logic
 document.addEventListener('DOMContentLoaded', function() {
     // Mostrar campos correctamente según el tipo de pago seleccionado
     document.querySelectorAll('input[name="tipo_pago"]').forEach(function(radio) {
@@ -7,16 +199,16 @@ document.addEventListener('DOMContentLoaded', function() {
             var montoPagadoLabel = document.getElementById('monto-pagado-label');
             var pagosEfctivoQr = document.getElementById('pagos-efectivo-qr');
             // Restablecer la visibilidad de los campos antes de cambiar el comportamiento
-            pagosEfctivoQr.style.display = 'none';
-            montoPagadoLabel.textContent = 'Monto Pagado';
+            if (pagosEfctivoQr) pagosEfctivoQr.style.display = 'none';
+            if (montoPagadoLabel) montoPagadoLabel.textContent = 'Monto Pagado';
             // Mostrar los campos adicionales según el tipo de pago seleccionado
             if (this.value === "Efectivo") {
-                montoPagadoLabel.textContent = 'Monto Pagado Efectivo';
+                if (montoPagadoLabel) montoPagadoLabel.textContent = 'Monto Pagado Efectivo';
             } else if (this.value === "QR") {
-                montoPagadoLabel.textContent = 'Monto Pagado por QR';
+                if (montoPagadoLabel) montoPagadoLabel.textContent = 'Monto Pagado por QR';
             } else if (this.value === "Efectivo y QR") {
-                montoPagadoLabel.textContent = 'Monto Pagado Efectivo';
-                pagosEfctivoQr.style.display = 'block';
+                if (montoPagadoLabel) montoPagadoLabel.textContent = 'Monto Pagado Efectivo';
+                if (pagosEfctivoQr) pagosEfctivoQr.style.display = 'block';
             }
         });
     });
@@ -27,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const vendedorInput = document.getElementById('vendedorSearch');
     const idUserInput = document.getElementById('id_user');
     let selectedVendedor = null;
-    const defaultVendedorId = '<?php echo e($defaultVendedorId); ?>';
+    const defaultVendedorId = '{{ $defaultVendedorId }}';
 
     function aplicarUsoVendedor() {
         if (document.getElementById('usar_vendedor_no') && document.getElementById('usar_vendedor_no').checked) {
@@ -103,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const hiddenInputVendedor = document.getElementById('usar_vendedor_hidden');
     const vendedorSearchInput = document.getElementById('vendedorSearch');
     const idUserInput = document.getElementById('id_user');
-    const defaultVendedorId = '<?php echo e($defaultVendedorId); ?>'; // Asegúrate de que esta variable esté disponible
+    const defaultVendedorId = '{{ $defaultVendedorId }}'; // Asegúrate de que esta variable esté disponible
 
     function syncHiddenInputsVendedor() {
         if (switchCheckboxVendedor && switchCheckboxVendedor.checked) {
@@ -166,204 +358,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Main cart and product functionality
-$(document).ready(function() {
-    // Función para cargar productos con AJAX y paginación
-    function fetchProductos(page = 1, search = '') {
-        $.ajax({
-            url: '<?php echo e(route('control.productos', ['id' => $id])); ?>',
-            method: 'GET',
-            data: {
-                page: page,
-                search: search,
-            },
-            success: function(response) {
-                // Cargar productos en el contenedor #product-list
-                var html = '';
-                response.productos.data.forEach(function(producto) {
-                    html += `
-                    <div class="col-md-4 ${producto.producto.stock_sucursal <= 0 ? 'out-of-stock-card' : ''}">
-                        <div class="card card-widget widget-user shadow-lg">
-                                            ${producto.producto.fotos && producto.producto.fotos.length > 0 ?
-                                                `<div class="widget-user-header text-white" style="background: url('<?php echo e(asset('storage/')); ?>/${producto.producto.fotos[0].foto}') center center; background-size: cover;">
-                                                                                                                                                                                                                                                                                                                     <h3 class="widget-user-username nombre-producto" style="text-shadow: 2px 2px 4px rgba(7, 7, 7, 0.5); font-size: 1.5em; font-weight: bold;">${producto.producto.nombre}</h3>
-                                                                                                                                                                                                                                                                                                                 </div>
-                                                                                                                                                                                                                                                                                                                 <div class="widget-user-image">
-                                                                                                                                                                                                                                                                                                                     <img class="img-circle" src="<?php echo e(asset('storage/')); ?>/${producto.producto.fotos[0].foto}" alt="Producto" loading="lazy" style="width: 128px; height: 128px; object-fit: cover;">
-                                                                                                                                                                                                                                                                                                                 </div>` :
-                                                `<div class="widget-user-header text-white" style="background-color: #ccc;">
-                                                                                                                                                                                                                                                                                                                     <h3 class="widget-user-username nombre-producto" style="text-shadow: 2px 2px 4px rgba(7, 7, 7, 0.5); font-size: 1.5em; font-weight: bold;">${producto.producto.nombre}</h3>
-                                                                                                                                                                                                                                                                                                                 </div>
-                                                                                                                                                                                                                                                                                                                 <div class="widget-user-image">
-                                                                                                                                                                                                                                                                                                                     <img class="img-circle" src="<?php echo e(asset('path/to/default/image.jpg')); ?>" alt="Producto" loading="lazy" style="width: 128px; height: 128px; object-fit: cover;">
-                                                                                                                                                                                                                                                                                                                 </div>`
-                                            }
-                                    <br>
-                                    <div class="card-footer">
-                                        <div class="row">
-                                            <div class="col-sm-4 border-right">
-                                                <div class="description-block">
-                                                    <h5 class="description-header">${producto.producto.precio}</h5>
-                                                    <span class="description-text">PRECIO</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-4 border-right">
-                                                <div class="description-block">
-                                                    <h5 class="description-header">${producto.producto.categoria ? producto.producto.categoria.categoria : 'No categoría'}</h5>
-                                                    <span class="description-text">CATEGORÍA</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-4">
-                                                <div class="description-block">
-                                                    <h5 class="description-header">${producto.producto.marca ? producto.producto.marca.marca : 'No marca'}</h5>
-                                                    <span class="description-text">MARCA</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-4">
-                                                <div class="description-block">
-                                                    <h5 class="description-header">${producto.producto.stock_actual}</h5>
-                                                    <span class="description-text">TOTAL EN ALMACÉN</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-4">
-                                                <div class="description-block">
-                                                    <h5 class="description-header">${producto.producto.stock_sucursal}</h5>
-                                                    <span class="description-text">TOTAL EN SUCURSAL</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <a href="#" class="btn btn-block agregar-carrito ${producto.producto.stock_sucursal <= 0 ? 'out-of-stock' : 'btn-success'}" data-id="${producto.producto.id}" data-nombre="${producto.producto.nombre}" data-precio="${producto.producto.precio}" data-stock-sucursal="${producto.producto.stock_sucursal}" data-toggle="modal" data-target="#cantidadModal">
-                                        ${producto.producto.stock_sucursal <= 0 ? 'PRODUCTO NO DISPONIBLE, AGREGUE CANTIDAD DEL PRODUCTO' : 'Vender'}
-                                    </a>
-                                </div>
-                            </div>
-                        `;
-                });
-                // Actualizar el listado de productos
-                $('#product-list').html(html);
-                // Actualizar los enlaces de paginación
-                var paginationLinks = '';
-                for (var i = 1; i <= response.productos.last_page; i++) {
-                    paginationLinks += `
-                        <li class="page-item ${i === response.productos.current_page ? 'active' : ''}">
-                            <a href="#" class="page-link" data-page="${i}">${i}</a>
-                        </li>
-                    `;
-                }
-                $('#pagination').html(paginationLinks);
-            }
-        });
-    }
-
-    // Cargar los productos al cargar la página
-    fetchProductos();
-
-    // Búsqueda de productos
-    $('#search').on('keyup', function() {
-        var search = $(this).val();
-        fetchProductos(1, search);
-    });
-
-    // Paginación con AJAX
-    $(document).on('click', '.page-link', function(e) {
-        e.preventDefault();
-        var page = $(this).data('page');
-        var search = $('#search').val();
-        fetchProductos(page, search);
-    });
-
-    // Bind eventos de clic a los botones agregar-carrito
-    $(document).on('click', '.agregar-carrito', function(e) {
-        e.preventDefault();
-        productoSeleccionado = {
-            id: $(this).data('id'),
-            nombre: $(this).data('nombre'),
-            precio: parseFloat($(this).data('precio')),
-            stockSucursal: parseInt($(this).data('stock-sucursal'))
-        };
-        // Verificar si el producto ya está en el carrito
-        const productoExistente = carrito.find(item => item.id === productoSeleccionado.id);
-        if (productoExistente) {
-            Swal.fire({
-                title: 'Alerta',
-                text: 'Ya tienes este producto en el carrito. Dirigiéndote al carrito...',
-                icon: 'info',
-                confirmButtonText: 'Aceptar'
-            }).then(() => {
-                mostrarCarrito();
-            });
-            return;
-        }
-        // Limpiar el input de cantidad antes de abrir el modal
-        document.getElementById('cantidad-input').value = '';
-        // Abrir el modal de cantidad
-        $('#cantidadModal').modal('show');
-    });
-});
-
-// Cart variables and functions
-let carrito = [];
+// Cart variables and functions (adapted for Alpine.js store)
 let carritoContador = document.getElementById('carrito-contador');
 let listaCarrito = document.querySelector('#lista-carrito tbody');
-let productoSeleccionado = null;
 
-document.getElementById('confirmar-cantidad').addEventListener('click', function() {
-    const cantidad = parseInt(document.getElementById('cantidad-input').value);
-    if (cantidad > 0) {
-        if (cantidad > productoSeleccionado.stockSucursal) {
-            Swal.fire({
-                title: 'Error',
-                html: `
-                <p style="font-size: 18px; font-weight: bold;">La cantidad ingresada (${cantidad}) excede el stock en la sucursal que es (${productoSeleccionado.stockSucursal}).</p>
-                <p style="color: red; font-size: 26px;">Agregue cantidad del Producto a la Sucursal.</p>
-            `,
-                icon: 'error',
-                confirmButtonText: 'Aceptar'
-            });
-            return;
-        }
-        const productoExistente = carrito.find(item => item.id === productoSeleccionado.id);
-        if (productoExistente) {
-            productoExistente.cantidad += cantidad;
-        } else {
-            carrito.push({
-                id: productoSeleccionado.id,
-                nombre: productoSeleccionado.nombre,
-                precio: productoSeleccionado.precio,
-                cantidad: cantidad,
-                stockSucursal: productoSeleccionado.stockSucursal // Guardar el stock en la sucursal para futuras validaciones
-            });
-        }
-        Swal.fire({
-            title: 'Éxito',
-            text: `${productoSeleccionado.nombre} agregado al carrito`,
-            icon: 'success',
-            confirmButtonText: 'Aceptar'
-        }).then(() => {
-            // Abre el modal del carrito después de que el usuario acepte el mensaje
-            mostrarCarrito();
-        });
-        actualizarCarritoContador();
-        $('#cantidadModal').modal('hide');
-    } else {
-        Swal.fire({
-            title: 'Error',
-            text: 'Cantidad inválida',
-            icon: 'error',
-            confirmButtonText: 'Aceptar'
-        });
-    }
-});
-
+// Función para actualizar el carrito contador usando Alpine store
 function actualizarCarritoContador() {
-    if (carritoContador) carritoContador.innerText = carrito.length;
+    if (carritoContador) carritoContador.innerText = Alpine.store("carrito").totalItems;
 }
-
-document.getElementById('mostrar-carrito').addEventListener('click', function(e) {
-    e.preventDefault();
-    mostrarCarrito();
-});
 
 // Evento para calcular el total a pagar con descuento
 document.getElementById('descuento').addEventListener('input', function() {
@@ -407,21 +409,11 @@ function calcularCambio() {
     document.getElementById('cambio').value = cambio >= 0 ? cambio.toFixed(2) : '0.00';
 }
 
-// Al iniciar, carga el carrito desde localStorage basado en el ID de la sucursal
-document.addEventListener('DOMContentLoaded', function() {
-    const sucursalId = <?php echo e($id); ?>; // Asegúrate de que este valor sea el ID de la sucursal actual
-    const storedCarrito = localStorage.getItem(`carrito-${sucursalId}`);
-    if (storedCarrito) {
-        carrito = JSON.parse(storedCarrito);
-        actualizarCarritoContador();
-        mostrarCarrito();
-    }
-});
-
 // Función para mostrar el carrito
 function mostrarCarrito() {
     if (!listaCarrito) return;
     listaCarrito.innerHTML = '';
+    const carrito = Alpine.store("carrito").items;
     if (carrito.length === 0) {
         listaCarrito.innerHTML = '<tr><td colspan="6" class="text-center">El carrito está vacío</td></tr>';
         document.getElementById('monto-total').value = '0.00';
@@ -438,7 +430,7 @@ function mostrarCarrito() {
             <td>${item.id}</td>
             <td>${item.nombre}</td>
             <td><input type="number" class="form-control precio-input" value="${item.precio.toFixed(2)}" data-index="${index}" step="0.01"></td>
-            <td><input type="number" class="form-control cantidad-input" value="${item.cantidad}" max="${item.stockSucursal}" data-index="${index}" step="1"></td>
+            <td><input type="number" class="form-control cantidad-input" value="${item.cantidad}" data-index="${index}" step="1"></td>
             <td><input type="number" class="form-control total-input" value="${total.toFixed(2)}" data-index="${index}" step="0.01" ></td>
             <td><button class="btn btn-danger btn-sm eliminar" data-id="${item.id}">Eliminar</button></td>
         </tr>
@@ -512,12 +504,12 @@ function mostrarCarrito() {
     });
     $('#carritoModal').modal('show');
     // Almacenar el carrito en localStorage con el ID de la sucursal
-    const sucursalId = <?php echo e($id); ?>;
-    localStorage.setItem(`carrito-${sucursalId}`, JSON.stringify(carrito));
+    Alpine.store("carrito").guardar();
 }
 
 // Función para actualizar los totales generales
 function actualizarTotales() {
+    const carrito = Alpine.store("carrito").items;
     let totalAPagar = 0;
     carrito.forEach(item => {
         totalAPagar += item.precio * item.cantidad;
@@ -527,36 +519,32 @@ function actualizarTotales() {
     // Calcular cambio si hay un monto pagado
     calcularCambio();
     // Almacenar el carrito en localStorage con el ID de la sucursal
-    const sucursalId = <?php echo e($id); ?>; // Este es un valor dinámico, asegúrate de que esté definido en el backend
-    localStorage.setItem(`carrito-${sucursalId}`, JSON.stringify(carrito));
+    Alpine.store("carrito").guardar();
 }
 
 document.getElementById('vaciar-carrito-fvc').addEventListener('click', function(e) {
     e.preventDefault();
-    carrito = [];
+    Alpine.store("carrito").items = [];
     actualizarCarritoContador();
     mostrarCarrito();
     // Limpiar el carrito en localStorage
-    const sucursalId = <?php echo e($id); ?>;
+    const sucursalId = {{ $id }};
     localStorage.removeItem(`carrito-${sucursalId}`);
 });
 
 listaCarrito.addEventListener('click', function(e) {
     if (e.target.classList.contains('eliminar')) {
         const id = parseInt(e.target.getAttribute('data-id')); // Convertir a número
-        carrito = carrito.filter(item => item.id !== id); // Filtrar productos que no coincidan con el id
+        Alpine.store("carrito").quitar(id); // Usar el método del store
         actualizarCarritoContador();
         mostrarCarrito();
-        // Actualizar el carrito en localStorage
-        const sucursalId = <?php echo e($id); ?>; // Este es un valor dinámico, asegúrate de que esté definido en el backend
-        localStorage.setItem(`carrito-${sucursalId}`, JSON.stringify(carrito));
     }
 });
 
 document.getElementById('venta-form').addEventListener('submit', function(event) {
     event.preventDefault(); // Evitar el envío predeterminado del formulario
     // Obtener el id de sucursal (por ejemplo, desde un valor en el backend o en un campo oculto)
-    const sucursalId = <?php echo e($id); ?>; // Asumimos que $id es el ID de la sucursal disponible desde el backend
+    const sucursalId = {{ $id }}; // Asumimos que $id es el ID de la sucursal disponible desde el backend
     // Verificar si la caja está abierta para esa sucursal
     fetch(`/verificar-caja-abierta/${sucursalId}`, {
             method: 'GET',
@@ -600,22 +588,13 @@ document.getElementById('venta-form').addEventListener('submit', function(event)
                 return;
             }
             // Recoger productos del carrito con precios y cantidades editados
-            const productos = [];
-            const rows = document.querySelectorAll('#lista-carrito tbody tr');
-            rows.forEach(row => {
-                const id = row.querySelector('td:nth-child(1)').innerText; // ID del producto
-                const nombre = row.querySelector('td:nth-child(2)').innerText; // Nombre del producto
-                const precio = parseFloat(row.querySelector('td:nth-child(3) input').value); // Precio editable
-                const cantidad = parseInt(row.querySelector('td:nth-child(4) input').value); // Cantidad editable
-                const total = parseFloat(row.querySelector('td:nth-child(5) input').value); // Total editable
-                productos.push({
-                    id: id,
-                    nombre: nombre,
-                    precio: precio,
-                    cantidad: cantidad,
-                    total: total
-                });
-            });
+            const productos = Alpine.store("carrito").items.map(item => ({
+                id: item.id,
+                nombre: item.nombre,
+                precio: item.precio,
+                cantidad: item.cantidad,
+                total: item.precio * item.cantidad
+            }));
             // Get the selected payment method
             const tipoPagoInput = document.querySelector('input[name="tipo_pago"]:checked');
             const tipoPago = tipoPagoInput ? tipoPagoInput.value : null;
@@ -696,12 +675,12 @@ document.getElementById('venta-form').addEventListener('submit', function(event)
                         let garantia = document.querySelector('input[name="garantia"]:checked');
                         let tipoGarantia = garantia ? garantia.value : 'sin_garantia'; // Si no hay selección, por defecto 'sin_garantia'
                         // Redirigir para descargar el PDF
-                        const url = '<?php echo e(route('nota.pdf')); ?>?nombre_cliente=' + encodeURIComponent(clienteNombre) + '&costo_total=' + encodeURIComponent(costoTotal.toFixed(2)) + '&ci=' + encodeURIComponent(inputCI.value) + '&id_user=' + encodeURIComponent(user) + '&productos=' + encodeURIComponent(JSON.stringify(productos)) + '&descuento=' + encodeURIComponent(descuentoInput.value || '0') + '&pagado=' + encodeURIComponent(pagadoInput.value || '0') + '&pagadoqr=' + encodeURIComponent(pagadoqrInput.value || '0') + '&cambio=' + encodeURIComponent(cambioInput.value || '0') + '&tipo_pago=' + encodeURIComponent(tipoPago) + '&garantia=' + encodeURIComponent(tipoGarantia) + // Agregar garantía
+                        const url = '{{ route('nota.pdf') }}?nombre_cliente=' + encodeURIComponent(clienteNombre) + '&costo_total=' + encodeURIComponent(costoTotal.toFixed(2)) + '&ci=' + encodeURIComponent(inputCI.value) + '&id_user=' + encodeURIComponent(user) + '&productos=' + encodeURIComponent(JSON.stringify(productos)) + '&descuento=' + encodeURIComponent(descuentoInput.value || '0') + '&pagado=' + encodeURIComponent(pagadoInput.value || '0') + '&pagadoqr=' + encodeURIComponent(pagadoqrInput.value || '0') + '&cambio=' + encodeURIComponent(cambioInput.value || '0') + '&tipo_pago=' + encodeURIComponent(tipoPago) + '&garantia=' + encodeURIComponent(tipoGarantia) + // Agregar garantía
                             '&id_sucursal=' + encodeURIComponent(sucursalId); // Aquí agregamos el id_sucursal
                         // Abrir la URL en una nueva pestaña
                         window.open(url, '_blank');
                         // Limpiar el carrito y los campos del formulario
-                        carrito = [];
+                        Alpine.store("carrito").items = [];
                         localStorage.removeItem(`carrito-${sucursalId}`);
                         document.getElementById('monto-total').value = '0.00';
                         document.getElementById('total-a-pagar').value = '0.00';
@@ -774,6 +753,105 @@ document.getElementById('regresar-carrito').addEventListener('click', function()
     });
 });
 
+// Quantity modal functionality
+let productoSeleccionado = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Bind events to agregar-carrito buttons
+    $(document).on('click', '.agregar-carrito', function(e) {
+        e.preventDefault();
+        productoSeleccionado = {
+            id: $(this).data('id'),
+            nombre: $(this).data('nombre'),
+            precio: parseFloat($(this).data('precio')),
+            stockSucursal: parseInt($(this).data('stockSucursal'))
+        };
+        // Verificar si el producto ya está en el carrito
+        const carrito = Alpine.store("carrito").items;
+        const productoExistente = carrito.find(item => item.id === productoSeleccionado.id);
+        if (productoExistente) {
+            Swal.fire({
+                title: 'Alerta',
+                text: 'Ya tienes este producto en el carrito. Dirigiéndote al carrito...',
+                icon: 'info',
+                confirmButtonText: 'Aceptar'
+            }).then(() => {
+                mostrarCarrito();
+            });
+            return;
+        }
+        // Limpiar el input de cantidad antes de abrir el modal
+        document.getElementById('cantidad-input').value = '';
+        // Abrir el modal de cantidad
+        $('#cantidadModal').modal('show');
+    });
+});
+
+// Confirm quantity button
+document.getElementById('confirmar-cantidad').addEventListener('click', function() {
+    const cantidad = parseInt(document.getElementById('cantidad-input').value);
+    if (cantidad > 0) {
+        if (cantidad > productoSeleccionado.stockSucursal) {
+            Swal.fire({
+                title: 'Error',
+                html: `
+                <p style="font-size: 18px; font-weight: bold;">La cantidad ingresada (${cantidad}) excede el stock en la sucursal que es (${productoSeleccionado.stockSucursal}).</p>
+                <p style="color: red; font-size: 26px;">Agregue cantidad del Producto a la Sucursal.</p>
+            `,
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+            return;
+        }
+
+        // Usar Alpine store para agregar al carrito
+        Alpine.store("carrito").agregar({
+            id: productoSeleccionado.id,
+            nombre: productoSeleccionado.nombre,
+            precio: productoSeleccionado.precio,
+            stock: productoSeleccionado.stockSucursal
+        });
+
+        // Mostrar mensaje de éxito y abrir carrito
+        Swal.fire({
+            title: 'Éxito',
+            text: `${productoSeleccionado.nombre} agregado al carrito`,
+            icon: 'success',
+            confirmButtonText: 'Aceptar'
+        }).then(() => {
+            mostrarCarrito();
+        });
+
+        $('#cantidadModal').modal('hide');
+    } else {
+        Swal.fire({
+            title: 'Error',
+            text: 'Cantidad inválida',
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+        });
+    }
+});
+
+// Show cart button
+document.getElementById('mostrar-carrito').addEventListener('click', function(e) {
+    e.preventDefault();
+    mostrarCarrito();
+});
+
+// Pagination click handler
+document.addEventListener('click', function(e) {
+    const pageLink = e.target.closest('.page-link');
+    if (pageLink && pageLink.hasAttribute('data-page')) {
+        e.preventDefault();
+        const page = parseInt(pageLink.getAttribute('data-page'));
+        const alpineEl = document.querySelector('[x-data*="productosApp"]');
+        if (alpineEl && alpineEl.__x) {
+            alpineEl.__x.$data.loadProductos(page);
+        }
+    }
+});
+
 // Clock update function
 document.addEventListener('DOMContentLoaded', function() {
     // Function to update the clock
@@ -782,10 +860,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const hours = now.getHours().toString().padStart(2, '0');
         const minutes = now.getMinutes().toString().padStart(2, '0');
         const seconds = now.getSeconds().toString().padStart(2, '0');
-        document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds}`;
+        const clockElement = document.getElementById('clock');
+        if (clockElement) {
+            clockElement.innerText = `${hours}:${minutes}:${seconds}`;
+        }
     }
     // Update the clock every second
     updateClock();
     setInterval(updateClock, 1000);
 });
-</script><?php /**PATH D:\Trabajo Nexus\TestImportadoraMiranda\resources\views/js/pro.blade.php ENDPATH**/ ?>
+</script>

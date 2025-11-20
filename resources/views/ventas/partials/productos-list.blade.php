@@ -35,16 +35,13 @@
                     <p class="badge rounded-pill px-4 py-2 mb-3" style="background-color: #bae6fd; color: #0284c7; font-weight: 700; font-size: 1.25rem; width: fit-content;">
                         Bs. {{ number_format($item->producto->precio, 2, ',', '.') }}
                     </p>
-                    <button 
+                    <button
                         type="button"
-                        x-data
-                        @click="$dispatch('agregar-al-carrito', {
-                            id: {{ $item->producto->id }},
-                            nombre: '{{ addslashes($item->producto->nombre) }}',
-                            precio: {{ $item->producto->precio }},
-                            stock: {{ $item->cantidad }}
-                        })"
-                        class="btn fw-bold text-white rounded-pill w-100 py-3 position-relative overflow-hidden"
+                        class="btn fw-bold text-white rounded-pill w-100 py-3 position-relative overflow-hidden agregar-carrito"
+                        data-id="{{ $item->producto->id }}"
+                        data-nombre="{{ $item->producto->nombre }}"
+                        data-precio="{{ $item->producto->precio }}"
+                        data-stock-sucursal="{{ $item->cantidad }}"
                         style="
                             background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%);
                             border: none;
@@ -56,6 +53,7 @@
                         onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 16px rgba(59, 120, 216, 0.4)';"
                         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';"
                         {{ $item->cantidad <= 0 ? 'disabled' : '' }}
+                        data-toggle="modal" data-target="#cantidadModal"
                     >
                         {{ $item->cantidad > 0 ? 'VENDER' : 'SIN STOCK' }}
                     </button>
