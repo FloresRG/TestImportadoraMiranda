@@ -143,7 +143,7 @@ document.addEventListener("alpine:init", () => {
                                 </div>
                                 <div class="mt-auto">
                                     <p class="badge rounded-pill px-4 py-2 mb-3" style="background-color: #bae6fd; color: #0284c7; font-weight: 700; font-size: 1.25rem; width: fit-content;">Bs. ${parseFloat(precio).toFixed(2).replace('.', ',')}</p>
-                                    <button type="button" class="btn fw-bold text-white rounded-pill w-100 py-3 position-relative overflow-hidden agregar-carrito" data-id="${producto.producto?.id || producto.id}" data-nombre="${nombre}" data-precio="${precio}" data-stock-sucursal="${stockSucursal}" style="background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%); border: none; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 16px rgba(59, 120, 216, 0.4)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';" ${stockSucursal <= 0 ? 'disabled' : ''} data-toggle="modal" data-target="#cantidadModal">
+                                    <button type="button" x-data @click="$dispatch('agregar-al-carrito', { id: ${producto.producto?.id || producto.id}, nombre: '${nombre.replace(/'/g, "\\'")}', precio: ${precio}, stock: ${stockSucursal} })" class="btn fw-bold text-white rounded-pill w-100 py-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #ffffff 0%, #cc9efd 25%, #a582ff 50%, #3b78d8 75%, #3b78d8 100%); border: none; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.5px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 16px rgba(59, 120, 216, 0.4)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';" ${stockSucursal <= 0 ? 'disabled' : ''}>
                                         ${stockSucursal > 0 ? 'VENDER' : 'SIN STOCK'}
                                     </button>
                                 </div>
@@ -753,85 +753,6 @@ document.getElementById('regresar-carrito').addEventListener('click', function()
     });
 });
 
-// Quantity modal functionality
-let productoSeleccionado = null;
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Bind events to agregar-carrito buttons
-    $(document).on('click', '.agregar-carrito', function(e) {
-        e.preventDefault();
-        productoSeleccionado = {
-            id: $(this).data('id'),
-            nombre: $(this).data('nombre'),
-            precio: parseFloat($(this).data('precio')),
-            stockSucursal: parseInt($(this).data('stockSucursal'))
-        };
-        // Verificar si el producto ya está en el carrito
-        const carrito = Alpine.store("carrito").items;
-        const productoExistente = carrito.find(item => item.id === productoSeleccionado.id);
-        if (productoExistente) {
-            Swal.fire({
-                title: 'Alerta',
-                text: 'Ya tienes este producto en el carrito. Dirigiéndote al carrito...',
-                icon: 'info',
-                confirmButtonText: 'Aceptar'
-            }).then(() => {
-                mostrarCarrito();
-            });
-            return;
-        }
-        // Limpiar el input de cantidad antes de abrir el modal
-        document.getElementById('cantidad-input').value = '';
-        // Abrir el modal de cantidad
-        $('#cantidadModal').modal('show');
-    });
-});
-
-// Confirm quantity button
-document.getElementById('confirmar-cantidad').addEventListener('click', function() {
-    const cantidad = parseInt(document.getElementById('cantidad-input').value);
-    if (cantidad > 0) {
-        if (cantidad > productoSeleccionado.stockSucursal) {
-            Swal.fire({
-                title: 'Error',
-                html: `
-                <p style="font-size: 18px; font-weight: bold;">La cantidad ingresada (${cantidad}) excede el stock en la sucursal que es (${productoSeleccionado.stockSucursal}).</p>
-                <p style="color: red; font-size: 26px;">Agregue cantidad del Producto a la Sucursal.</p>
-            `,
-                icon: 'error',
-                confirmButtonText: 'Aceptar'
-            });
-            return;
-        }
-
-        // Usar Alpine store para agregar al carrito
-        Alpine.store("carrito").agregar({
-            id: productoSeleccionado.id,
-            nombre: productoSeleccionado.nombre,
-            precio: productoSeleccionado.precio,
-            stock: productoSeleccionado.stockSucursal
-        });
-
-        // Mostrar mensaje de éxito y abrir carrito
-        Swal.fire({
-            title: 'Éxito',
-            text: `${productoSeleccionado.nombre} agregado al carrito`,
-            icon: 'success',
-            confirmButtonText: 'Aceptar'
-        }).then(() => {
-            mostrarCarrito();
-        });
-
-        $('#cantidadModal').modal('hide');
-    } else {
-        Swal.fire({
-            title: 'Error',
-            text: 'Cantidad inválida',
-            icon: 'error',
-            confirmButtonText: 'Aceptar'
-        });
-    }
-});
 
 // Show cart button
 document.getElementById('mostrar-carrito').addEventListener('click', function(e) {
