@@ -162,7 +162,7 @@ return [
     'layout_fixed_sidebar' => true,
     'layout_fixed_navbar' => null,
     'layout_fixed_footer' => null,
-    'layout_dark_mode' => false,
+    'layout_dark_mode' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -366,11 +366,11 @@ return [
         ],
         
        [
-    'text' => '',
-    'url'  => '/solicitudes',
-    'icon' => 'fas fa-file-signature',
-    'topnav_right' => true,
-    'can' => 'pedidos.index',
+   'text' => '',
+   'url'  => '/solicitudes',
+   'icon' => 'fas fa-file-signature',
+   'topnav_right' => true,
+   'can' => 'pedidos.index',
 ],
 
 

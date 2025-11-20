@@ -77,4 +77,35 @@
 <style scoped>
 .z-1 { z-index: 1; }
 .pt-16 { padding-top: 4rem; }
+
+/* Dark Mode Styles */
+.dark-mode .position-relative.rounded-4.overflow-hidden.shadow-sm.border {
+    background: #2d2d2d !important;
+}
+
+.dark-mode .position-absolute.top-0.start-0.w-100.py-2.text-center {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #3b3b3b 50%, #4a4a4a 75%, #4a4a4a 100%) !important;
+}
+
+.dark-mode .badge {
+    background-color: #4a4a4a !important;
+    color: #ffffff !important;
+}
+
+.dark-mode .btn {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #3b3b3b 50%, #4a4a4a 75%, #4a4a4a 100%) !important;
+    color: #ffffff !important;
+}
+
+.dark-mode .text-center.py-5 .bg-light {
+    background-color: #3d3d3d !important;
+}
+
+.dark-mode .text-center.py-5 .fas {
+    color: #cccccc !important;
+}
+
+.dark-mode .text-center.py-5 p {
+    color: #cccccc !important;
+}
 </style>

@@ -13,6 +13,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
+        .light-bg {
+            background-color: #f8f9fa;
+        }
+
+        .dark-mode .light-bg {
+            background-color: #2d2d2d !important;
+        }
+
+        .dark-mode .linear-gradient {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #3b3b3b 50%, #4a4a4a 75%, #4a4a4a 100%) !important;
+        }
+
         /* Estilos para la tabla */
 
 
@@ -287,7 +299,7 @@
 
         <form method="POST" action="{{ route('envios.storecuaderno') }}" id="create-envio-form" class="needs-validation">
             @csrf
-            <div class="border rounded p-4" style="background-color: #f8f9fa;">
+            <div class="border rounded p-4 light-bg">
                 <div class="form-row align-items-center">
 
                     <!-- Número de Celular -->
@@ -308,7 +320,7 @@
         </form>
 
         <!-- Filtros -->
-        <div class="border rounded p-4" style="background-color: #f8f9fa;">
+        <div class="border rounded p-4 light-bg">
             <form id="filters-form" class="mb-3">
                 @csrf
                 <div class="form-row align-items-center">

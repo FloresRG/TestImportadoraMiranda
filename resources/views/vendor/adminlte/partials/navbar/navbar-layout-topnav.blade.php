@@ -37,6 +37,13 @@
             {{-- Configured right links --}}
             @each('adminlte::partials.navbar.menu-item', $adminlte->menu('navbar-right'), 'item')
 
+            {{-- Darkmode toggle --}}
+            @if(config('adminlte.layout_dark_mode'))
+                <li class="nav-item">
+                    <x-adminlte-navbar-darkmode-widget />
+                </li>
+            @endif
+
             {{-- User menu link --}}
             @if(Auth::user())
                 @if(config('adminlte.usermenu_enabled'))

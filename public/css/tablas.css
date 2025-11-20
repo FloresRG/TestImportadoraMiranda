@@ -97,3 +97,28 @@ tbody tr:hover td {
         font-size: 14px; /* Tamaño de fuente normal para pantallas más grandes */
     }
 }
+
+/* Dark Mode Styles for Tables */
+.dark-mode table {
+    color: #ffffff;
+}
+
+.dark-mode th {
+    background-color: #2d2d2d;
+    border-color: #555555;
+    color: #ffffff;
+}
+
+.dark-mode td {
+    background-color: #1a1a1a;
+    border-color: #555555;
+    color: #ffffff;
+}
+
+.dark-mode tbody tr:hover {
+    background-color: #333333;
+}
+
+.dark-mode tbody tr:hover td {
+    background-color: #333333;
+}

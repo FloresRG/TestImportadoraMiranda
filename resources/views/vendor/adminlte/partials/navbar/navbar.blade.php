@@ -1,9 +1,6 @@
-<nav class="main-header navbar
-    {{ config('adminlte.classes_topnav_nav', 'navbar-expand') }}
-    {{ config('adminlte.classes_topnav', 'navbar-white navbar-light') }}"
-    style="
-        background: linear-gradient(135deg, #cc9efd 0%, #cc9efd 25%, #a582ff 50%,  #a582ff 75%, #3b78d8 100%) !important;
-    ">
+<nav class="main-header navbar custom-navbar
+   {{ config('adminlte.classes_topnav_nav', 'navbar-expand') }}
+   {{ config('adminlte.classes_topnav', 'navbar-white navbar-light') }}">
 
     {{-- Navbar left links --}}
     <ul class="navbar-nav">
@@ -16,6 +13,11 @@
     <ul class="navbar-nav ml-auto">
         @yield('content_top_nav_right')
         @each('adminlte::partials.navbar.menu-item', $adminlte->menu('navbar-right'), 'item')
+        @if(config('adminlte.layout_dark_mode'))
+            <li class="nav-item">
+                <x-adminlte-navbar-darkmode-widget />
+            </li>
+        @endif
         @if(Auth::user())
             @if(config('adminlte.usermenu_enabled'))
                 @include('adminlte::partials.navbar.menu-item-dropdown-user-menu')
@@ -29,6 +31,10 @@
     </ul>
 
    <style>
+    .custom-navbar {
+        background: linear-gradient(135deg, #cc9efd 0%, #cc9efd 25%, #a582ff 50%,  #a582ff 75%, #3b78d8 100%) !important;
+    }
+
     .main-header.navbar .nav-link,
     .main-header.navbar .nav-link *,
     .main-header.navbar i,
@@ -72,7 +78,20 @@
         transform: scale(1.3);
     }
 
-</style>
+    /* Dark Mode Styles for Navbar */
+    .dark-mode .custom-navbar {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #3b3b3b 50%, #4a4a4a 75%, #4a4a4a 100%) !important;
+    }
+
+    .dark-mode .main-header.navbar .nav-link,
+    .dark-mode .main-header.navbar .nav-link *,
+    .dark-mode .main-header.navbar i,
+    .dark-mode .main-header.navbar svg {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+    }
+
+ </style>
 
 
 </nav>
