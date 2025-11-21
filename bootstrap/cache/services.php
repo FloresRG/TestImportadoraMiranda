@@ -33,9 +33,11 @@
     29 => 'Carbon\\Laravel\\ServiceProvider',
     30 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
     31 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    32 => 'Spatie\\Permission\\PermissionServiceProvider',
-    33 => 'Yajra\\DataTables\\DataTablesServiceProvider',
-    34 => 'App\\Providers\\AppServiceProvider',
+    32 => 'Spatie\\LaravelData\\LaravelDataServiceProvider',
+    33 => 'Spatie\\Permission\\PermissionServiceProvider',
+    34 => 'Spatie\\StructureDiscoverer\\StructureDiscovererServiceProvider',
+    35 => 'Yajra\\DataTables\\DataTablesServiceProvider',
+    36 => 'App\\Providers\\AppServiceProvider',
   ),
   'eager' => 
   array (
@@ -57,9 +59,11 @@
     15 => 'Carbon\\Laravel\\ServiceProvider',
     16 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
     17 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    18 => 'Spatie\\Permission\\PermissionServiceProvider',
-    19 => 'Yajra\\DataTables\\DataTablesServiceProvider',
-    20 => 'App\\Providers\\AppServiceProvider',
+    18 => 'Spatie\\LaravelData\\LaravelDataServiceProvider',
+    19 => 'Spatie\\Permission\\PermissionServiceProvider',
+    20 => 'Spatie\\StructureDiscoverer\\StructureDiscovererServiceProvider',
+    21 => 'Yajra\\DataTables\\DataTablesServiceProvider',
+    22 => 'App\\Providers\\AppServiceProvider',
   ),
   'deferred' => 
   array (
