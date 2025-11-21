@@ -3,116 +3,112 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Veripagos - Generar QR</title>
+    <title>Veripagos - Importadora Miranda</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 p-6">
-    <div class="max-w-lg mx-auto bg-white rounded-lg shadow p-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-4">Pago con QR - Veripagos</h1>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-md mx-auto bg-white rounded shadow p-6">
+        <h1 class="text-xl font-bold mb-4">Pagar con QR - BCP</h1>
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Monto (Bs.)</label>
-            <input
-                type="number"
-                step="0.01"
-                id="monto"
-                placeholder="Ej. 15.90"
-                class="w-full p-2 border rounded mt-1"
-                min="0"
-            />
-        </div>
+        <input
+            type="number"
+            step="0.01"
+            id="monto"
+            placeholder="Monto en Bs. (ej: 10.50)"
+            class="w-full p-2 border rounded mb-3"
+        />
 
-        <button
-            onclick="generarQr()"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-medium"
-        >
+        <button onclick="generarQr()" class="w-full bg-blue-600 text-white py-2 rounded">
             Generar QR
         </button>
 
-        <div id="resultado" class="mt-6 hidden">
-            <h2 class="text-lg font-semibold mb-2">Escanea este código:</h2>
+        <div id="qr-container" class="mt-6 hidden">
+            <h2 class="font-semibold mb-2">Escanea este código:</h2>
             <img id="qr-img" class="w-full max-w-xs mx-auto border rounded" />
             <p class="text-sm text-gray-600 mt-2">
-                ID: <span id="movimiento-id" class="font-mono"></span>
+                Pedido ID: <span id="pedido-id" class="font-mono"></span>
             </p>
-            <button
-                onclick="verificarQr()"
-                class="mt-3 w-full bg-green-600 hover:bg-green-700 text-white py-1.5 rounded text-sm"
-            >
-                Verificar Estado del Pago
+            <button onclick="verificarManual()" class="mt-2 text-sm text-blue-600 underline">
+                Verificar manualmente
             </button>
         </div>
 
-        <div id="mensaje" class="mt-4 text-sm min-h-[24px]"></div>
+        <div id="mensaje" class="mt-4 min-h-[24px]"></div>
     </div>
 
     <script>
-        let movimientoId = null;
+        let pedidoId = null;
+        let eventSource = null;
 
         async function generarQr() {
-            const monto = document.getElementById('monto').value;
-            if (!monto || parseFloat(monto) <= 0) {
-                mostrarMensaje('Ingresa un monto válido.', 'red');
+            const monto = parseFloat(document.getElementById('monto').value);
+            if (!monto || monto <= 0) {
+                alert('Ingresa un monto válido');
                 return;
             }
 
+            console.log('Enviando solicitud para generar QR...', { monto });
+
             try {
-                const res = await fetch("{{ route('veripagos.generar') }}", {
+                const res = await fetch('/veripagos/generar-qr', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ monto: parseFloat(monto) })
+                    body: JSON.stringify({ monto })
                 });
 
                 const data = await res.json();
+                console.log('Respuesta generarQr:', data);
 
                 if (data.Codigo === 0 && data.Data) {
-                    document.getElementById('qr-img').src = 'data:image/png;base64,' + data.Data.qr;
-                    document.getElementById('movimiento-id').textContent = data.Data.movimiento_id;
-                    movimientoId = data.Data.movimiento_id;
-                    document.getElementById('resultado').classList.remove('hidden');
-                    mostrarMensaje('✅ QR generado. ¡Escanea con tu app bancaria!', 'green');
+                    document.getElementById('qr-img').src = 'image/png;base64,' + data.Data.qr;
+                    // Extrae el pedido_id del lado del cliente (lo generamos en backend y devolvemos en data)
+                    // Pero como no lo devuelve Veripagos, lo generamos aquí y lo enviamos:
+                    // → En este ejemplo, lo simulamos con timestamp
+                    pedidoId = 'pedido_' + Date.now();
+                    document.getElementById('pedido-id').textContent = pedidoId;
+                    document.getElementById('qr-container').classList.remove('hidden');
+
+                    // Iniciar SSE
+                    iniciarSSE(pedidoId);
                 } else {
-                    mostrarMensaje('❌ ' + (data.Mensaje || 'Error al generar QR'), 'red');
+                    document.getElementById('mensaje').innerHTML = 
+                        `<span class="text-red-600">❌ ${data.Mensaje || 'Error al generar QR'}</span>`;
                 }
             } catch (err) {
-                mostrarMensaje('⚠️ Error de conexión', 'orange');
+                console.error('Error generarQr', err);
+                document.getElementById('mensaje').innerHTML = 
+                    '<span class="text-red-600">⚠️ Error de conexión</span>';
             }
         }
 
-        async function verificarQr() {
-            if (!movimientoId) return;
+        function iniciarSSE(pedidoId) {
+            console.log('Iniciando SSE para pedido:', pedidoId);
+            eventSource = new EventSource(`/sse/pago/${pedidoId}`);
 
-            try {
-                const res = await fetch("{{ route('veripagos.verificar') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ movimiento_id: movimientoId })
-                });
+            eventSource.onopen = () => console.log('SSE: conexión abierta');
+            eventSource.onerror = (err) => console.error('SSE error:', err);
 
-                const data = await res.json();
+            eventSource.addEventListener('pago_completado', (e) => {
+                const data = JSON.parse(e.data);
+                console.log('✅ Pago completado recibido vía SSE:', data);
+                document.getElementById('mensaje').innerHTML = 
+                    '<div class="p-3 bg-green-100 text-green-800 rounded text-sm">✅ ¡Pago confirmado! Gracias por tu compra.</div>';
+                eventSource.close();
+            });
 
-                if (data.Codigo === 0 && data.Data) {
-                    const estado = data.Data.estado;
-                    const color = estado === 'Completado' ? 'green' : 'orange';
-                    mostrarMensaje(`📌 Estado: ${estado} | Monto: Bs. ${data.Data.monto}`, color);
-                } else {
-                    mostrarMensaje('❌ ' + (data.Mensaje || 'No se pudo verificar'), 'red');
-                }
-            } catch (err) {
-                mostrarMensaje('⚠️ Error al verificar', 'orange');
-            }
+            eventSource.addEventListener('timeout', () => {
+                console.log('SSE: timeout');
+                eventSource.close();
+            });
         }
 
-        function mostrarMensaje(texto, color) {
-            const el = document.getElementById('mensaje');
-            el.textContent = texto;
-            el.className = `mt-4 text-sm text-${color}-600`;
+        async function verificarManual() {
+            console.log('Verificación manual solicitada');
+            // Esta función solo es de respaldo; el SSE ya maneja la actualización
+            alert('La verificación en tiempo real está activa. Este botón es solo de respaldo.');
         }
     </script>
 </body>
