@@ -19,6 +19,8 @@ class VeripagosController extends Controller
 
     public function generarQr(Request $request)
     {
+        $request->validate(['monto' => 'required|numeric|min:0.01']);
+
         $secretKey = config('veripagos.secret_key');
         $username = config('veripagos.username');
         $password = config('veripagos.password');
@@ -28,58 +30,45 @@ class VeripagosController extends Controller
             return response()->json(['Codigo' => 1, 'Mensaje' => 'Error interno: credenciales no configuradas'], 500);
         }
 
-        $pedidoId = 'pedido_' . now()->timestamp . '_' . rand(100, 999);
+        $pedidoId = 'pedido_' . now()->timestamp . '_' . rand(1000, 9999);
         Log::info('Generando QR', ['pedido_id' => $pedidoId, 'monto' => $request->monto]);
 
-        $response = Http::withBasicAuth($username, $password)
-            ->timeout(30)
-            ->post("{$this->baseUrl}/generar-qr", [
-                'secret_key' => $secretKey,
-                'monto' => (float) $request->monto,
-                'data' => ['pedido_id' => $pedidoId],
-                'vigencia' => '0/00:10',
-                'uso_unico' => true,
-                'detalle' => 'Pago Importadora Miranda',
-            ]);
+        try {
+            $response = Http::withBasicAuth($username, $password)
+                ->timeout(30)
+                ->post("{$this->baseUrl}/generar-qr", [
+                    'secret_key' => $secretKey,
+                    'monto' => (float) $request->monto,
+                    'data' => ['pedido_id' => $pedidoId],
+                    'vigencia' => '0/00:10',
+                    'uso_unico' => true,
+                    'detalle' => 'Pago Importadora Miranda',
+                ]);
 
-        $data = $response->json();
+            $data = $response->json();
 
-        if ($data['Codigo'] === 0) {
-            // Inicializa estado en caché como "pendiente"
-            Cache::put("pago_{$pedidoId}_estado", 'pendiente', now()->addMinutes(10));
-            Log::info('QR generado', ['movimiento_id' => $data['Data']['movimiento_id'], 'pedido_id' => $pedidoId]);
+            if ($data['Codigo'] === 0) {
+                Cache::put("pago_{$pedidoId}_estado", 'pendiente', now()->addMinutes(10));
+                Log::info('QR generado', ['movimiento_id' => $data['Data']['movimiento_id'], 'pedido_id' => $pedidoId]);
+                $data['pedido_id'] = $pedidoId; // ← ¡clave para sincronizar con frontend!
+            }
+
+            return response()->json($data);
+        } catch (\Exception $e) {
+            Log::error('Error al generar QR', ['exception' => $e->getMessage()]);
+            return response()->json(['Codigo' => 1, 'Mensaje' => 'Error al conectar con Veripagos'], 500);
         }
-
-        return response()->json($data);
-    }
-
-    public function verificarQr(Request $request)
-    {
-        $secretKey = config('veripagos.secret_key');
-        $username = config('veripagos.username');
-        $password = config('veripagos.password');
-
-        $response = Http::withBasicAuth($username, $password)
-            ->post("{$this->baseUrl}/verificar-estado-qr", [
-                'secret_key' => $secretKey,
-                'movimiento_id' => $request->movimiento_id,
-            ]);
-
-        return response()->json($response->json());
     }
 
     public function webhook(Request $request)
     {
-        // Validar Basic Auth
         $auth = $request->header('Authorization');
         if (!$auth || !str_starts_with($auth, 'Basic ')) {
-            Log::warning('Webhook: sin autorización');
             return response('Unauthorized', 401);
         }
 
         $credentials = base64_decode(substr($auth, 6));
         if (!$credentials || !str_contains($credentials, ':')) {
-            Log::warning('Webhook: credenciales mal formadas');
             return response('Unauthorized', 401);
         }
 
@@ -89,7 +78,6 @@ class VeripagosController extends Controller
             return response('Unauthorized', 401);
         }
 
-        // Validar payload
         $payload = $request->validate([
             'movimiento_id' => 'required|integer',
             'monto' => 'required|numeric',
@@ -111,9 +99,6 @@ class VeripagosController extends Controller
 
     public function streamPagoEstado(string $pedidoId)
     {
-        Log::info("SSE: cliente conectado para {$pedidoId}");
-
-        // Inicializa caché si no existe
         if (!Cache::has("pago_{$pedidoId}_estado")) {
             Cache::put("pago_{$pedidoId}_estado", 'pendiente', now()->addMinutes(10));
         }
@@ -121,35 +106,28 @@ class VeripagosController extends Controller
         return response()->stream(function () use ($pedidoId) {
             echo "event: connected\n";
             echo 'data: {"msg":"SSE conectado"}' . "\n\n";
-            ob_flush();
-            flush();
+            ob_flush(); flush();
 
             $timeout = now()->addMinutes(2);
             while (now()->lessThan($timeout)) {
-                if (connection_aborted()) {
-                    Log::info("SSE: conexión cerrada por cliente {$pedidoId}");
-                    break;
-                }
+                if (connection_aborted()) break;
 
                 $estado = Cache::get("pago_{$pedidoId}_estado");
-                Log::debug("SSE: verificando estado", ['pedido_id' => $pedidoId, 'estado' => $estado]);
-
                 if ($estado === 'completado') {
                     echo "event: pago_completado\n";
                     echo 'data: {"estado":"completado","mensaje":"¡Pago confirmado!"}' . "\n\n";
-                    ob_flush();
-                    flush();
-                    Log::info("SSE: evento enviado para {$pedidoId}");
+                    ob_flush(); flush();
                     break;
                 }
 
                 sleep(1);
             }
 
-            echo "event: timeout\n";
-            echo 'data: {"msg":"timeout"}' . "\n\n";
-            ob_flush();
-            flush();
+            if (!connection_aborted()) {
+                echo "event: timeout\n";
+                echo 'data: {"msg":"timeout"}' . "\n\n";
+                ob_flush(); flush();
+            }
         }, 200, [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',

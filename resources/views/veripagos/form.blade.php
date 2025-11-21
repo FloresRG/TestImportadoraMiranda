@@ -28,16 +28,12 @@
             <p class="text-sm text-gray-600 mt-2">
                 Pedido ID: <span id="pedido-id" class="font-mono"></span>
             </p>
-            <button onclick="verificarManual()" class="mt-2 text-sm text-blue-600 underline">
-                Verificar manualmente
-            </button>
         </div>
 
         <div id="mensaje" class="mt-4 min-h-[24px]"></div>
     </div>
 
     <script>
-        let pedidoId = null;
         let eventSource = null;
 
         async function generarQr() {
@@ -47,7 +43,7 @@
                 return;
             }
 
-            console.log('Enviando solicitud para generar QR...', { monto });
+            document.getElementById('mensaje').innerHTML = '<span class="text-blue-600">_generando QR...</span>';
 
             try {
                 const res = await fetch('/veripagos/generar-qr', {
@@ -60,19 +56,15 @@
                 });
 
                 const data = await res.json();
-                console.log('Respuesta generarQr:', data);
 
-                if (data.Codigo === 0 && data.Data) {
-                    document.getElementById('qr-img').src = 'image/png;base64,' + data.Data.qr;
-                    // Extrae el pedido_id del lado del cliente (lo generamos en backend y devolvemos en data)
-                    // Pero como no lo devuelve Veripagos, lo generamos aquí y lo enviamos:
-                    // → En este ejemplo, lo simulamos con timestamp
-                    pedidoId = 'pedido_' + Date.now();
-                    document.getElementById('pedido-id').textContent = pedidoId;
+                if (data.Codigo === 0 && data.Data && data.pedido_id) {
+                    document.getElementById('qr-img').src = 'data:image/png;base64,' + data.Data.qr;
+                    document.getElementById('pedido-id').textContent = data.pedido_id;
                     document.getElementById('qr-container').classList.remove('hidden');
+                    document.getElementById('mensaje').innerHTML = '';
 
-                    // Iniciar SSE
-                    iniciarSSE(pedidoId);
+                    // Iniciar SSE con el ID real del backend
+                    iniciarSSE(data.pedido_id);
                 } else {
                     document.getElementById('mensaje').innerHTML = 
                         `<span class="text-red-600">❌ ${data.Mensaje || 'Error al generar QR'}</span>`;
@@ -85,30 +77,31 @@
         }
 
         function iniciarSSE(pedidoId) {
-            console.log('Iniciando SSE para pedido:', pedidoId);
+            if (eventSource) eventSource.close();
+
             eventSource = new EventSource(`/sse/pago/${pedidoId}`);
 
             eventSource.onopen = () => console.log('SSE: conexión abierta');
-            eventSource.onerror = (err) => console.error('SSE error:', err);
+            eventSource.onerror = (err) => {
+                console.error('SSE error:', err);
+                document.getElementById('mensaje').innerHTML = 
+                    '<span class="text-orange-600">⚠️ Error en conexión en tiempo real</span>';
+            };
 
             eventSource.addEventListener('pago_completado', (e) => {
                 const data = JSON.parse(e.data);
-                console.log('✅ Pago completado recibido vía SSE:', data);
                 document.getElementById('mensaje').innerHTML = 
                     '<div class="p-3 bg-green-100 text-green-800 rounded text-sm">✅ ¡Pago confirmado! Gracias por tu compra.</div>';
                 eventSource.close();
             });
 
             eventSource.addEventListener('timeout', () => {
-                console.log('SSE: timeout');
                 eventSource.close();
+                if (!document.getElementById('mensaje').innerHTML.includes('✅')) {
+                    document.getElementById('mensaje').innerHTML = 
+                        '<span class="text-gray-600">⏳ Tiempo de espera agotado. Verifica manualmente.</span>';
+                }
             });
-        }
-
-        async function verificarManual() {
-            console.log('Verificación manual solicitada');
-            // Esta función solo es de respaldo; el SSE ya maneja la actualización
-            alert('La verificación en tiempo real está activa. Este botón es solo de respaldo.');
         }
     </script>
 </body>

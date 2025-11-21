@@ -773,19 +773,18 @@ Route::get('/recojoproductocola/{idventa}', function ($idventa) {
 // Rutas de autenticación
 Auth::routes();
 
-use App\Http\Controllers\VerificacionController;
 use App\Http\Controllers\VeripagosController;
 
-Route::get('/verificacion', [VerificacionController::class, 'index'])->name('verificacion.index');
-Route::get('/verificacion/validar', [VerificacionController::class, 'validar'])->name('verificacion.validar');
-
-
-// Rutas de interfaz y acciones
+// Formulario
 Route::get('/veripagos', [VeripagosController::class, 'showForm'])->name('veripagos.form');
-Route::post('/veripagos/generar-qr', [VeripagosController::class, 'generarQr'])->name('veripagos.generar');
-Route::post('/veripagos/verificar-qr', [VeripagosController::class, 'verificarQr'])->name('veripagos.verificar');
 
-// Webhook: debe ser accesible públicamente y sin CSRF
+// Acciones
+Route::post('/veripagos/generar-qr', [VeripagosController::class, 'generarQr'])->name('veripagos.generar');
+
+// SSE (¡crucial!)
+Route::get('/sse/pago/{pedidoId}', [VeripagosController::class, 'streamPagoEstado']);
+
+// Webhook (pública, sin CSRF)
 Route::post('/webhook/veripagos', [VeripagosController::class, 'webhook'])
     ->name('veripagos.webhook')
     ->withoutMiddleware(['web', 'csrf']);
