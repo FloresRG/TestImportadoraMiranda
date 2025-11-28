@@ -13,10 +13,12 @@ class VerificacionController extends Controller
         return view('verificacion.index');
     }
 
-    // 2. Devuelve las últimas 20 ventas con sus productos (cargadas eager)
+    // 2. Devuelve las últimas 20 ventas con sus productos y los totales del día
     public function validar()
     {
-    $ventas = Venta::with(['ventaProductos.producto', 'user']) // <-- añadido 'user'
+        $hoy = \Carbon\Carbon::today();
+
+        $ventas = Venta::with(['ventaProductos.producto', 'user'])
             ->orderBy('created_at', 'desc')
             ->take(20)
             ->get()
@@ -25,6 +27,30 @@ class VerificacionController extends Controller
                 return $venta;
             });
 
-        return response()->json($ventas);
+        $totalEfectivo = Venta::whereDate('fecha', $hoy)
+            ->where('estado', 'NORMAL')
+            ->where('tipo_pago', 'Efectivo')
+            ->sum('costo_total') +
+            Venta::whereDate('fecha', $hoy)
+            ->where('estado', 'NORMAL')
+            ->where('tipo_pago', 'Efectivo y QR')
+            ->sum('efectivo');
+
+        $totalQr = Venta::whereDate('fecha', $hoy)
+            ->where('estado', 'NORMAL')
+            ->where('tipo_pago', 'QR')
+            ->sum('costo_total') +
+            Venta::whereDate('fecha', $hoy)
+            ->where('estado', 'NORMAL')
+            ->where('tipo_pago', 'Efectivo y QR')
+            ->sum('qr');
+
+        return response()->json([
+            'ventas' => $ventas,
+            'totales' => [
+                'efectivo' => $totalEfectivo,
+                'qr' => $totalQr,
+            ]
+        ]);
     }
 }

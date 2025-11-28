@@ -1437,103 +1437,91 @@ class OrdenPdfController extends Controller
 
     public function datosqye($pdf, $pedido, $marginTop)
     {
-        $pdf->SetY($marginTop);
+         // Reducir margen superior al mínimo
+        $pdf->SetY($marginTop - 2);
 
-        // Logo centrado
-        $pdf->Image('images/logo.png', 30, 5, 20, 20, 'PNG'); // Ajusta la ruta y tamaño del logo
-        $pdf->Ln(17); // Espacio debajo del logo
+        // Logo centrado más arriba y pequeño
+        $pdf->Image('images/logo.png', 30, 2, 18, 18, 'PNG');
+        $pdf->Ln(15);
 
-        // Cabecera
+        // Cabecera compacta
         $pdf->SetFont('Arial', 'B', 9);
         $pdf->Cell(0, 4, utf8_decode("IMPORTADORA MIRANDA S.A."), 0, 1, 'C');
         $pdf->SetFont('Arial', '', 8);
-        $pdf->Cell(0, 4, utf8_decode("A un Click del Producto que Necesita!!"), 0, 1, 'C');
-        $pdf->SetFont('Arial', '', 8);
-        $pdf->Cell(0, 4, utf8_decode("Telefono: 70621016"), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("Direccion: Caparazon Mall Center, Planta Baja, Local Nro29"), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode($pedido['nombre_sucursal']), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("Fecha: " . date('Y/m/d H:i:s')), 0, 1, 'C');
-
-
-        $pdf->Cell(0, 4, utf8_decode("Codigo de Venta:IMP" . date('Y/m/d')), 0, 1, 'C');
+        $pdf->Cell(0, 3, utf8_decode("A un Click del Producto que Necesita!!"), 0, 1, 'C');
+        $pdf->Cell(0, 3, utf8_decode("Fecha: " . date('Y/m/d H:i:s')), 0, 1, 'C');
 
         // Línea separadora
-        $pdf->Ln(2);
-        $pdf->Cell(0, 0, '', 'T'); // Línea horizontal
-        $pdf->Ln(2);
+        $pdf->Ln(1);
+        $pdf->Cell(0, 0, '', 'T');
+        $pdf->Ln(1);
 
-
+        // Forma de pago
         $pdf->SetFont('Arial', '', 8);
-        $pdf->Cell(0, 4, utf8_decode("Forma de Pago: " . $pedido['forma_pago']), 0, 1, 'C');
-        $pdf->SetFont('Arial', 'B', 8);
-        // Información de la factura
+        $pdf->Cell(0, 3, utf8_decode("Forma de Pago: " . $pedido['forma_pago']), 0, 1, 'C');
+
+        // Título
         $pdf->SetFont('Arial', 'B', 8);
         $pdf->Cell(0, 4, utf8_decode("COMPRA DE PRODUCTO"), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode(strtoupper($pedido['garantia'])), 0, 1, 'C');
 
         // Línea separadora
-        $pdf->Ln(2);
-        $pdf->Cell(0, 0, '', 'T'); // Línea horizontal
-        $pdf->Ln(2);
+        $pdf->Ln(1);
+        $pdf->Cell(0, 0, '', 'T');
+        $pdf->Ln(1);
 
-        $pdf->Cell(0, 4, utf8_decode("Cliente: " . $pedido['nombre_cliente']), 0, 1, 'L');
-        $pdf->Cell(0, 4, utf8_decode("CI / NIT: " . $pedido['nit']), 0, 1, 'L'); // Mostrar el CI aquí
-        $pdf->Cell(0, 4, utf8_decode("Fecha: " . $pedido['fecha']), 0, 1, 'L');
-        $pdf->Cell(0, 4, utf8_decode("Vendedor: " . $pedido['nombre_vendedor']), 0, 1, 'L');
+        // Información de cliente y vendedor
+        $pdf->SetFont('Arial', '', 7);
+        $halfWidth = 35;
+        $pdf->Cell($halfWidth, 4, utf8_decode("Cliente: " . $pedido['nombre_cliente']), 0, 0, 'L');
+        $pdf->Cell($halfWidth, 4, utf8_decode("CI / NIT: " . $pedido['nit']), 0, 1, 'L');
 
-        /*    vendedor quiero que se vea aqui */
-
+        $pdf->Cell($halfWidth, 4, utf8_decode("Fecha: " . $pedido['fecha']), 0, 0, 'L');
+        $pdf->Cell($halfWidth, 4, utf8_decode("Vendedor: " . $pedido['nombre_vendedor']), 0, 1, 'L');
 
         // Línea separadora
-        $pdf->Ln(2);
-        $pdf->Cell(0, 0, '', 'T'); // Línea horizontal
-        $pdf->Ln(2);
+        $pdf->Ln(1);
+        $pdf->Cell(0, 0, '', 'T');
+        $pdf->Ln(1);
 
         // Detalle de productos
-        $pdf->SetFont('Arial', 'B', 8);
-        // Cabecera
-        $pdf->Cell(10, 6, utf8_decode("Cant."), 1, 0, 'C');
-        $pdf->Cell(30, 6, utf8_decode("Desc."), 1, 0, 'C');
-        $pdf->Cell(10, 6, utf8_decode("P.Unit"), 1, 0, 'C');
-        $pdf->Cell(15, 6, utf8_decode("Subtotal"), 1, 1, 'C');
+        $pdf->SetFont('Arial', 'B', 7);
+        $pdf->Cell(10, 5, utf8_decode("Cant."), 1, 0, 'C');
+        $pdf->Cell(30, 5, utf8_decode("Desc."), 1, 0, 'C');
+        $pdf->Cell(10, 5, utf8_decode("P.Unit"), 1, 0, 'C');
+        $pdf->Cell(15, 5, utf8_decode("Subtotal"), 1, 1, 'C');
 
         // Productos
         $pdf->SetFont('Arial', '', 6);
-
         if (is_array($pedido['productos'])) {
             foreach ($pedido['productos'] as $producto) {
                 $pdf->Cell(10, 4, utf8_decode($producto['cantidad']), 1, 0, 'C');
 
-                // Ajustar el tamaño de la fuente según la longitud del nombre del producto
                 $nombre = utf8_decode($producto['nombre'] ?? 'Sin descripción');
-                $maxCaracteres = 20; // Número de caracteres antes de reducir el tamaño
-
+                $maxCaracteres = 20;
                 if (strlen($nombre) > $maxCaracteres) {
-                    $pdf->SetFont('Arial', '', 5); // Disminuye el tamaño de fuente si el texto es muy largo
+                    $pdf->SetFont('Arial', '', 5);
                 } else {
-                    $pdf->SetFont('Arial', '', 7); // Tamaño normal
+                    $pdf->SetFont('Arial', '', 6);
                 }
 
                 $pdf->Cell(30, 4, $nombre, 1, 0, 'L');
-
                 $pdf->SetFont('Arial', '', 6);
-                $pdf->Cell(10, 4, utf8_decode($producto['precio']), 1, 0, 'R'); // Precio unitario
-                $pdf->Cell(15, 4, utf8_decode($producto['total']), 1, 1, 'R'); // Total del producto
+                $pdf->Cell(10, 4, utf8_decode($producto['precio']), 1, 0, 'R');
+                $pdf->Cell(15, 4, utf8_decode($producto['total']), 1, 1, 'R');
             }
         } else {
-            $pdf->Cell(0, 10, 'No hay productos disponibles.', 0, 1, 'C');
+            $pdf->Cell(0, 6, 'No hay productos disponibles.', 0, 1, 'C');
         }
 
         // Línea separadora
-        $pdf->Ln(2);
-        $pdf->Cell(0, 0, '', 'T'); // Línea horizontal
-        $pdf->Ln(2);
+        $pdf->Ln(1);
+        $pdf->Cell(0, 0, '', 'T');
+        $pdf->Ln(1);
 
-        // Subtotal y total
-        $pdf->SetFont('Arial', 'B', 8);
-
-        // Calculate the subtotal
-        $subtotal = array_sum(array_column($pedido['productos'], 'total')) + $pedido['descuento'];
+        // Totales compactos
+        $pdf->SetFont('Arial', 'B', 7);
+        $subtotal = array_sum(array_column($pedido['productos'] ?? [], 'total'));
+        $precio_original = $subtotal + ($pedido['descuento'] ?? 0);
 
         $pdf->Cell(0, 4, utf8_decode("PRECIO ORIGINAL: " . number_format($subtotal, 2)), 0, 1, 'R');
         $pdf->Cell(0, 4, utf8_decode("DESCUENTO: " . number_format($pedido['descuento'], 2)), 0, 1, 'R');
@@ -1544,22 +1532,14 @@ class OrdenPdfController extends Controller
         $pdf->Cell(0, 4, utf8_decode("MONTO A PAGAR: " . number_format($pedido['monto_a_pagar'], 2)), 0, 1, 'R');
 
         // Línea separadora
-        $pdf->Ln(2);
-        $pdf->Cell(0, 0, '', 'T'); // Línea horizontal
-        $pdf->Ln(2);
+        $pdf->Ln(1);
+        $pdf->Cell(0, 0, '', 'T');
+        $pdf->Ln(1);
 
-        // Subtotal y total
+        // Mensaje final compacto
         $pdf->SetFont('Arial', 'B', 7);
-        $pdf->Cell(0, 4, utf8_decode("NOTA IMPORTANTE"), 0, 1, 'C');
-        $pdf->SetFont('Arial', '', 7);
-        $pdf->Cell(0, 4, utf8_decode("Los productos en PROMOCION NO CUENTAN CON NINGUN"), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("TIPO DE GARANTIA, ya que se encuentran en precio de REMATE."), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("Si su producto llegara a contar con algun defecto de FABRICA"), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("si quiere cambiarlo debe cancelar el producto al precio normal."), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("y debe traerlo como maximo al dia siguente por la tarde con su"), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("NOTA DE VENTA de lo contrario"), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("pierde derecho a cualquier RECLAMO"), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode("GRACIAS POR SU COMPRA :D !!!"), 0, 1, 'C');
+        $pdf->Cell(0, 4, utf8_decode("¡GRACIAS POR SU COMPRA!"), 0, 1, 'C');
+        $pdf->Ln(1);
     }
     public function datos($pdf, $pedido, $marginTop)
     {

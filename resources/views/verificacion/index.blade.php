@@ -260,11 +260,56 @@
         .error {
             color: #dc2626;
         }
+
+        /* === CARDS TOTALES === */
+        .cards-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .card-total {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            text-align: center;
+            min-width: 200px;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .card-total h3 {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .card-total p {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
     </style>
 </head>
 
 <body>
     <h2>Verificación de Ventas</h2>
+    
+    <div class="cards-container">
+        <div class="card-total">
+            <h3>Total Efectivo (Hoy)</h3>
+            <p id="total-efectivo">Bs. 0.00</p>
+        </div>
+        <div class="card-total">
+            <h3>Total QR (Hoy)</h3>
+            <p id="total-qr">Bs. 0.00</p>
+        </div>
+    </div>
+
     <div id="lista-ventas"></div>
     <div id="toast-container"></div>
 
@@ -464,7 +509,18 @@
         function cargarVentas() {
             axios.get('{{ route('verificacion.validar') }}')
                 .then(response => {
-                    const ventas = Array.isArray(response.data) ? response.data : [];
+                    const data = response.data;
+                    // Manejar la nueva estructura de respuesta (con totales) o la antigua (solo array)
+                    const ventas = data.ventas || (Array.isArray(data) ? data : []);
+                    const totales = data.totales || { efectivo: 0, qr: 0 };
+
+                    // Actualizar tarjetas de totales
+                    const totalEfectivoEl = document.getElementById('total-efectivo');
+                    const totalQrEl = document.getElementById('total-qr');
+                    
+                    if (totalEfectivoEl) totalEfectivoEl.textContent = `Bs. ${parseFloat(totales.efectivo).toFixed(2)}`;
+                    if (totalQrEl) totalQrEl.textContent = `Bs. ${parseFloat(totales.qr).toFixed(2)}`;
+
                     if (!compararVentas(ventas, ultimaData)) return;
                     actualizarVentasNuevas(ventas);
                     ultimaData = ventas.map(v => ({ ...v }));

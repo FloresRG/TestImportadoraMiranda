@@ -788,3 +788,9 @@ Route::get('/sse/pago/{pedidoId}', [VeripagosController::class, 'streamPagoEstad
 Route::post('/webhook/veripagos', [VeripagosController::class, 'webhook'])
     ->name('veripagos.webhook')
     ->withoutMiddleware(['web', 'csrf']);
+
+// Verificacion Routes
+use App\Http\Controllers\VerificacionController;
+
+Route::get('/verificacion', [VerificacionController::class, 'index'])->name('verificacion.index');
+Route::get('/verificacion/validar', [VerificacionController::class, 'validar'])->name('verificacion.validar');
