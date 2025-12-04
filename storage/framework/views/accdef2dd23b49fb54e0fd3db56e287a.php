@@ -4,7 +4,7 @@
         Alpine.store("carrito", {
             items: (() => {
                 try {
-                    const sucursalId = {{ $id }};
+                    const sucursalId = <?php echo e($id); ?>;
                     const data = localStorage.getItem(`carrito-${sucursalId}`);
                     return data ? JSON.parse(data) : [];
                 } catch (e) {
@@ -13,7 +13,7 @@
             })(),
 
             guardar() {
-                const sucursalId = {{ $id }};
+                const sucursalId = <?php echo e($id); ?>;
                 localStorage.setItem(`carrito-${sucursalId}`, JSON.stringify(this.items));
             },
 
@@ -259,7 +259,7 @@
         const vendedorInput = document.getElementById('vendedorSearch');
         const idUserInput = document.getElementById('id_user');
         let selectedVendedor = null;
-        const defaultVendedorId = '{{ $defaultVendedorId }}';
+        const defaultVendedorId = '<?php echo e($defaultVendedorId); ?>';
 
         function aplicarUsoVendedor() {
             if (document.getElementById('usar_vendedor_no') && document.getElementById('usar_vendedor_no')
@@ -341,7 +341,7 @@
         const hiddenInputVendedor = document.getElementById('usar_vendedor_hidden');
         const vendedorSearchInput = document.getElementById('vendedorSearch');
         const idUserInput = document.getElementById('id_user');
-        const defaultVendedorId = '{{ $defaultVendedorId }}'; // Asegúrate de que esta variable esté disponible
+        const defaultVendedorId = '<?php echo e($defaultVendedorId); ?>'; // Asegúrate de que esta variable esté disponible
 
         function syncHiddenInputsVendedor() {
             if (switchCheckboxVendedor && switchCheckboxVendedor.checked) {
@@ -618,7 +618,7 @@
         actualizarCarritoContador();
         mostrarCarrito();
         // Limpiar el carrito en localStorage
-        const sucursalId = {{ $id }};
+        const sucursalId = <?php echo e($id); ?>;
         localStorage.removeItem(`carrito-${sucursalId}`);
     });
 
@@ -636,7 +636,7 @@
         event.preventDefault(); // Evitar el envío predeterminado del formulario
         // Obtener el id de sucursal (por ejemplo, desde un valor en el backend o en un campo oculto)
         const sucursalId =
-            {{ $id }}; // Asumimos que $id es el ID de la sucursal disponible desde el backend
+            <?php echo e($id); ?>; // Asumimos que $id es el ID de la sucursal disponible desde el backend
         // Verificar si la caja está abierta para esa sucursal
         fetch(`/verificar-caja-abierta/${sucursalId}`, {
                 method: 'GET',
@@ -787,7 +787,7 @@
                             let tipoGarantia = garantia ? garantia.value :
                                 'sin_garantia'; // Si no hay selección, por defecto 'sin_garantia'
                             // Redirigir para descargar el PDF
-                            const url = '{{ route('nota.pdf') }}?nombre_cliente=' + encodeURIComponent(
+                            const url = '<?php echo e(route('nota.pdf')); ?>?nombre_cliente=' + encodeURIComponent(
                                     clienteNombre) + '&costo_total=' + encodeURIComponent(costoTotal
                                     .toFixed(2)) + '&ci=' + encodeURIComponent(inputCI.value) +
                                 '&id_user=' + encodeURIComponent(user) + '&productos=' +
@@ -915,3 +915,4 @@
         setInterval(updateClock, 1000);
     });
 </script>
+<?php /**PATH D:\TESTIMPORTADORA\TestImportadoraMiranda\resources\views/js/pro-alpine.blade.php ENDPATH**/ ?>

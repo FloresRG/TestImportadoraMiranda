@@ -83,12 +83,12 @@
                             <input type="text" id="vendedorSearch" class="form-control"
                                 placeholder="Escribe para buscar vendedor..." list="sugerencias_vendedores" disabled>
                             <datalist id="sugerencias_vendedores">
-                                @foreach ($users as $user)
-                                    <option value="{{ $user->name }}" data-id="{{ $user->id }}">
-                                @endforeach
+                                <?php $__currentLoopData = $users; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $user): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($user->name); ?>" data-id="<?php echo e($user->id); ?>">
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </datalist>
 
-                            <input type="hidden" name="id_user" id="id_user" value="{{ $defaultVendedorId }}">
+                            <input type="hidden" name="id_user" id="id_user" value="<?php echo e($defaultVendedorId); ?>">
                         </div>
                     </div>
                 </div>
@@ -231,3 +231,4 @@
         </div>
     </div>
 </div>
+<?php /**PATH D:\TESTIMPORTADORA\TestImportadoraMiranda\resources\views/control/partials/cart-modal.blade.php ENDPATH**/ ?>
